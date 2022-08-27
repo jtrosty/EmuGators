@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     // I'm making edits to test how this work.
     // testing 2 to make sure branch protection works.
-
+    // testing 3 to make sure I'm doing this right
 }
 
 MainWindow::~MainWindow()
