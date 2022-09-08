@@ -40,6 +40,13 @@ public:
 
     void keyPressEvent(QKeyEvent* event) override;
 
+    // Slots
+    void updateImage();
+
+    // Signals
+    void PixelDataUpdated();
+
+
     // Helper functions
     void changeInputX(bool direction);
     void updatePixelData();
