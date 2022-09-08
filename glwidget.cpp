@@ -16,9 +16,9 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
         pixelData[i + 2] = startR++;
         pixelData[i + 3] = startA;
     }
-    imageData = new QImage(pixelData, width * scale, height * scale, QImage::Format_ARGB32);
-    pixmap = new QPixmap(width * scale, height * scale);
-    pixmap->loadFromData(pixelData, pixelDataLength);
+    //imageData = new QImage(pixelData, width * scale, height * scale, QImage::Format_ARGB32);
+    //pixmap = new QPixmap(width * scale, height * scale);
+    //pixmap->loadFromData(pixelData, pixelDataLength);
 }
 
 GLWidget::~GLWidget() {
@@ -60,7 +60,7 @@ void GLWidget::updatePixelData() {
         pixelData[i] 	 += inputX;
         pixelData[i + 1] += inputY;
     }
-    emit PixelDataUpdated();
+    //emit PixelDataUpdated();
 }
 
 
@@ -77,20 +77,14 @@ void GLWidget::initializeGL() {
 
 void GLWidget::paintGL() {
     updatePixelData();
+    QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+    f->glClear(GL_COLOR_BUFFER_BIT);
     QPainter p(this);
-    //delete imageData;
+    QImage img(pixelData, width * scale, height * scale, QImage::Format_ARGB32);
     //imageData = new QImage(pixelData, width * scale, height * scale, QImage::Format_ARGB32);
-    /*
-    if(pixmap->loadFromData(pixelData, pixelDataLength)) {
-
-        //great
-    }
-    else {
-
-    }
-    */
     //imageData->loadFromData(pixelData, pixelDataLength);
-    p.drawPixmap(QPoint(0,0), *pixmap);
+    //p.drawPixmap(QPoint(0,0), *pixmap);
+    p.drawImage(rect(), img);
     //p.drawImage(QPoint(0,0), *imageData);
     /*
     p.setPen(Qt::red);
