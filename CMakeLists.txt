@@ -13,14 +13,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS OpenGLWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Gui)
 
 set(PROJECT_SOURCES
         main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
+        window.cpp
+        window.h
+        glwidget.cpp
+        glwidget.h
 	nesemulator.cpp
+        nesemulator.h
 	cpu.cpp
+        cpu.h
+        defs.h
+        forward.h
+        badge.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -47,6 +55,8 @@ else()
 endif()
 
 target_link_libraries(Qt_Test PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(Qt_Test PRIVATE Qt6::OpenGLWidgets)
+target_link_libraries(Qt_Test PRIVATE Qt6::Gui)
 
 set_target_properties(Qt_Test PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
