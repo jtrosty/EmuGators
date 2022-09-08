@@ -10,10 +10,8 @@ class Window : public QWidget
 
 public:
     Window();
-    //void keyPressEvent(QKeyEvent* event) override;
 
 protected:
-    void keyPressEvent(QKeyEvent* event) override;
 
 private:
 };
