@@ -5,11 +5,9 @@
 #include <QOpenGLWidget>
 #include <QPainter>
 #include <QOpenGLFunctions>
-#include <QPixmap>//TODO(Jon) delete?
 #include <QImage>
 #include <QPoint>
 #include <QKeyEvent>
-#include <QPixmap>
 
 class GLWidget : public QOpenGLWidget
 {
@@ -32,8 +30,6 @@ public:
     uchar inputX = 0;
     uchar inputY = 0;
     uint pixelDataLength = width * height * bytesPerPixel;
-
-    bool test_W = false;
 
     GLWidget(QWidget* parent);
 

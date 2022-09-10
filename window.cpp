@@ -1,9 +1,4 @@
 #include "window.h"
-#include "glwidget.h"
-
-#include <QGridLayout>
-#include <QLabel>
-#include <QPushButton>
 
 Window::Window()
 {
@@ -11,6 +6,8 @@ Window::Window()
     QPushButton *button = new QPushButton(this);
     button->setText("Push me");
     QGridLayout* layout = new QGridLayout(this);
+    RomLoader* romLoader = new RomLoader();
+
 
     QKeyEvent* event;
 
