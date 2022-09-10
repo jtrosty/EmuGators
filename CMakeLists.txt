@@ -22,13 +22,16 @@ set(PROJECT_SOURCES
         window.h
         glwidget.cpp
         glwidget.h
-	nesemulator.cpp
+        nesemulator.cpp
         nesemulator.h
-	cpu.cpp
+        cpu.cpp
         cpu.h
+        romloader.cpp
+        romloader.h
         defs.h
         forward.h
         badge.h
+        resource.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
