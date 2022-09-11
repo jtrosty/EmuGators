@@ -6,26 +6,26 @@
 #include "badge.h"
 
 
-#define UNDEFINED_MEMORY_ACCESS_MODE(mode) \
-    fprintf(stderr, "Memory access code number %u failed\n", mode);	\
+#define UNDEFINED_INSTRUCTION(instruction) \
+    fprintf(stderr, "Instruction %08x not found\n", instruction);	\
     assert(false);
 
 
 #define IS_ALU_OPCODE(opcode, offset, memoryAccessMode)		\
     case (unsigned)ALUInstructionOpcodeBase::opcode + offset:	\
     opcode(MemoryAccessMode::memoryAccessMode);	    \
-    break;
+    break
 
 
 
 #define RUN_IF_ALU_OPCODE(opcode) \
-    IS_ALU_OPCODE(opcode, 0x01, XZeroPageIndexed) \
-    IS_ALU_OPCODE(opcode, 0x05, ZeroPage) \
-    IS_ALU_OPCODE(opcode, 0x09, Immediate) \
-    IS_ALU_OPCODE(opcode, 0x0D, Absolute) \
-    IS_ALU_OPCODE(opcode, 0x11, YIndexedIndirect) \
-    IS_ALU_OPCODE(opcode, 0x15, XZeroPageIndexed) \
-    IS_ALU_OPCODE(opcode, 0x19, YAbsoluteIndexed) \
+    IS_ALU_OPCODE(opcode, 0x01, XZeroPageIndexed);	\
+    IS_ALU_OPCODE(opcode, 0x05, ZeroPage);		\
+    IS_ALU_OPCODE(opcode, 0x09, Immediate);		\
+    IS_ALU_OPCODE(opcode, 0x0D, Absolute);		\
+    IS_ALU_OPCODE(opcode, 0x11, YIndexedIndirect);	\
+    IS_ALU_OPCODE(opcode, 0x15, XZeroPageIndexed);	\
+    IS_ALU_OPCODE(opcode, 0x19, YAbsoluteIndexed);	\
     IS_ALU_OPCODE(opcode, 0x1D, XAbsoluteIndexed)
 
 
