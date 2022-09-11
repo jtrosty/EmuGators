@@ -15,20 +15,88 @@ void CPU::runOpcode(EncodedInstructionType inst)
     printf("runOpcode happens with %u\n", (unsigned)inst);
     
     switch (inst) {
-	RUN_IF_ALU_OPCODE(AND)
+	RUN_IF_ALU_OPCODE(ORA);
+	RUN_IF_ALU_OPCODE(AND);
+	RUN_IF_ALU_OPCODE(EOR);
+	RUN_IF_ALU_OPCODE(ADC);
+	RUN_IF_ALU_OPCODE(CMP);
+	RUN_IF_ALU_OPCODE(SBC);
+    default:
+	UNDEFINED_INSTRUCTION(inst);
+	    
     }
 }
 
+u8 CPU::getOperand(MemoryAccessMode mode)
+{
+    if (mode != MemoryAccessMode::Immediate) {
+	fprintf(stderr, "Only immediate memory access is doable as of now!\n");
+	exit(1);
+    }
+    return mA;
+}
+
+void CPU::ORA(MemoryAccessMode mode)
+{
+    printf("ORA\n");
+    u8 operand = getOperand(mode);
+    mA |= operand;
+}
 
 void CPU::AND(MemoryAccessMode mode)
 {
     // just accumulator mode
-    printf("This happens\n");
-    switch (mode) { // TODO: A large switch statement to check for the access mode will not do down the line. Too much duplication.
-    case MemoryAccessMode::Immediate:
-	mA &= mA;
-	break;
-    default:
-	UNDEFINED_MEMORY_ACCESS_MODE(mode);
-    }
+    printf("AND\n");
+    u8 operand = getOperand(mode);
+    mA &= operand;
+}
+
+void CPU::EOR(MemoryAccessMode mode)
+{
+    // just accumulator mode
+    printf("EOR\n");
+    u8 operand = getOperand(mode);
+    mA ^= operand;
+}
+
+void CPU::ADC(MemoryAccessMode mode)
+{
+    // just accumulator mode
+    printf("ADC\n");
+    u8 operand = getOperand(mode);
+    u8 result = mA + operand;
+    if (result < mA)
+	mP = ProcessorStatus::Carry;
+    if (mA == 0)
+	mP = ProcessorStatus::Zero;
+    if (result & 0x10000000)
+	mP = ProcessorStatus::Negative;
+}
+
+void CPU::CMP(MemoryAccessMode mode)
+{
+    // just accumulator mode
+    printf("CMP\n");
+    u8 operand = getOperand(mode);
+    
+    if (mA > operand)
+	mP = ProcessorStatus::Carry;
+    if (mA == operand)
+	mP = ProcessorStatus::Zero;
+    if (operand & 0x10000000)
+	mP = ProcessorStatus::Negative;
+}
+
+void CPU::SBC(MemoryAccessMode mode)
+{
+    // just accumulator mode
+    printf("SBC\n");
+    u8 operand = getOperand(mode);
+    u8 result = mA - operand;
+    if (result > mA)
+	mP = ProcessorStatus::Carry;
+    if (mA == 0)
+	mP = ProcessorStatus::Zero;
+    if (result & 0x10000000)
+	mP = ProcessorStatus::Negative;
 }
