@@ -48,7 +48,7 @@ public:
     };
 
     
-    enum MemoryAccessMode {
+    enum class MemoryAccessMode {
 	Implicit = 0, 		/* Imp */
 	Accumulator,		/* A */
 	Immediate,		/* #v */
@@ -64,14 +64,23 @@ public:
 	YIndexedIndirect,       /* (d), y */
     };
     
+    enum class ProcessorStatus { // TODO(Matt): research specific difference between Negative, Overflow, and Carry
+	Carry,
+	Zero,
+	InterruptDisable,
+	DecimalMode,
+	BreakCommand,
+	Overflow,
+	Negative,
+    };
     
-    u8& P() { return mP; }
+    ProcessorStatus& P() { return mP; }
     u8& SP() { return mSP; }
     u16& PC() { return mPC; }
     u8& A() { return mA; }
     u8& X() { return mX; }
     u8& Y() { return mY; }
-    u8 P() const { return mP; }
+    ProcessorStatus P() const { return mP; }
     u8 SP() const { return mSP; }
     u16 PC() const { return mPC; }
     u8 A() const { return mA; }
@@ -80,11 +89,25 @@ public:
     void runOpcode(EncodedInstructionType);
 
 private:
+    u8 getOperand(MemoryAccessMode);
+    // Addition instructions do not currently set a status flag afterward.
+    void ORA(MemoryAccessMode);
     void AND(MemoryAccessMode);
+    void ADC(MemoryAccessMode);
+    void EOR(MemoryAccessMode);
+    void CMP(MemoryAccessMode);
+    void SBC(MemoryAccessMode);
+
+    /** These require memory access which we can't do right now
+	void STA(MemoryAccessMode);
+	void LDA(MemoryAccessMode);
+	
+    */
+    
     // DecodedInstruction decodeInstruction(EncodedInstructionType);
 
     
-    u8 mP;
+    ProcessorStatus mP;
     u8 mSP;
     u16 mPC;;
     u8 mA;

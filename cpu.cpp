@@ -1,9 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "cpu.h"
 
 void CPU::reset(Badge<NESEmulator>)
 {
-    mP = 0x34;
+    mP = (ProcessorStatus)0x34; // Why 0x34?
     mA = mX = mY = 0;
     mSP = 0xfd;
     mClockCycle = 0;
