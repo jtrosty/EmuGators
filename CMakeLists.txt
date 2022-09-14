@@ -28,6 +28,8 @@ set(PROJECT_SOURCES
         cpu.h
         romloader.cpp
         romloader.h
+        bus.cpp
+        bus.h
         defs.h
         forward.h
         badge.h
