@@ -35,6 +35,7 @@ public:
     void reset(Badge<NESEmulator>);	/* Can the contents of this just be in the constructor? Is reset ever run outside of powering on the machine? Does it ever truly reboot? */
 
     using EncodedInstructionType = u8;
+    using ClockCycleType = u32;
 
     enum class ALUInstructionOpcodeBase {
 	ORA = 0x0,
@@ -88,6 +89,8 @@ public:
     u8 Y() const { return mY; }
     void runOpcode(EncodedInstructionType);
 
+    void normallyIncrementClockCycle(MemoryAccessMode);
+
 private:
     u8 getOperand(MemoryAccessMode);
     // Addition instructions do not currently set a status flag afterward.
@@ -114,5 +117,5 @@ private:
     u8 mX;
     u8 mY;
     
-    u32 mClockCycle;
+    ClockCycleType mClockCycle;
 };
