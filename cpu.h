@@ -109,7 +109,7 @@ private:
     
     ProcessorStatus mP;
     u8 mSP;
-    u16 mPC;;
+    u16 mPC;
     u8 mA;
     u8 mX;
     u8 mY;

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "nesemulator.h"
 #include "cpu.h"
 
 void CPU::reset(Badge<NESEmulator>)
@@ -29,11 +30,16 @@ void CPU::runOpcode(EncodedInstructionType inst)
 
 u8 CPU::getOperand(MemoryAccessMode mode)
 {
-    if (mode != MemoryAccessMode::Immediate) {
-	fprintf(stderr, "Only immediate memory access is doable as of now!\n");
+    auto& emulator = NESEmulator::the();
+    switch (mode) {
+    case MemoryAccessMode::Immediate:
+	return mA;
+    case MemoryAccessMode::ZeroPage:
+	return emulator.bus().readMemory(emulator.bus().readMemory(++mPC));
+    default:
+	fprintf(stderr, "Only immediate and zero page memory access are implemented!\n");
 	exit(1);
     }
-    return mA;
 }
 
 void CPU::ORA(MemoryAccessMode mode)
