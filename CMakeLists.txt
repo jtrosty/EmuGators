@@ -30,6 +30,8 @@ set(PROJECT_SOURCES
         romloader.h
         bus.cpp
         bus.h
+        ppu.cpp
+        ppu.h
         defs.h
         forward.h
         badge.h
