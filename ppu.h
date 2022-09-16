@@ -26,6 +26,20 @@ private:
     Bus* bus;
 
     u8 vRam[0x4000] {0};
+    /*
+     * 0x0000- 0x0FFF - Pattern Table 0
+     * 0x1000- 0x1FFF - Pattern Table 1
+     * 0x2000- 0x23FF - NameTable 0
+     * 0x2400- 0x27FF - NameTable 1
+     * 0x2800- 0x2BFF - NameTable 2
+     * 0x2C00- 0x2FFF - NameTable 3
+     *
+     *
+     *
+     *
+     *
+     *
+     */
     u16 spriteStart = 0x0000;
     u16 nameTableStart = 0x2000;
     u16 paletteMemStart = 0x3F00;
@@ -33,6 +47,9 @@ private:
 public:
     PPU(QByteArray* glPixelData, Bus* _bus);
     ~PPU();
+    void debug_load_vRam();
+    void renderNameTable();
+    void drawSprite(int x, int y);
 
 
 private:
