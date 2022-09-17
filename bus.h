@@ -2,6 +2,8 @@
 #define BUS_H
 
 #include "defs.h"
+#include "badge.h"
+#include "forward.h"
 #include <QByteArray>
 #include <QDebug>
 
@@ -47,7 +49,7 @@ class Bus
     u16 ppuRegisterEnd =    0x3FFF;
 
 public:
-    Bus();
+    Bus(Badge<NESEmulator>);
     ~Bus();
 
     void loadROM(QByteArray rom);
