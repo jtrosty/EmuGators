@@ -1,6 +1,7 @@
 #pragma once
 
 #include "defs.h"
+#include "bus.h"
 #include "forward.h" 
 #include "cpu.h"
 
@@ -14,4 +15,5 @@ private:
     NESEmulator();
 
     CPU mCPU { {} };
+    Bus mBus { {} };
 };
