@@ -28,6 +28,21 @@ void CPU::runOpcode(EncodedInstructionType inst)
     }
 }
 
+void CPU::normallyIncrementClockCycle(MemoryAccessMode mode)
+{
+    switch (mode) {
+    case MemoryAccessMode::Immediate:
+    case MemoryAccessMode::Accumulator:
+	mClockCycle += 2;
+	break;
+    case MemoryAccessMode::ZeroPage:
+	mClockCycle += 3;
+	break;
+    default:
+	fprintf(stderr, "Cannot increment clock cycle, memory access mode unimplemented.\n");
+	exit(1);
+    }
+}
 
 
 u8 CPU::getOperand(MemoryAccessMode mode)

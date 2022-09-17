@@ -73,7 +73,8 @@ public:
 	Overflow,
 	Negative,
     };
-    
+    void normallyIncrementClockCycle(MemoryAccessMode mode);
+
     ProcessorStatus& P() { return mP; }
     u8& SP() { return mSP; }
     u16& PC() { return mPC; }
