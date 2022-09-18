@@ -11,10 +11,10 @@ Bus::~Bus() {
 
 void Bus::loadROM(QByteArray rom) {
     for (int i = 0; i < rom.size(); i++) {
-        if (ramStart + i >= 0xFFFA) {
+        if (mRamStart + i >= 0xFFFA) {
             qInfo("Rom load violated address Rom space");
         }
-        memory[ramStart + i] = rom.at(i);
+        memory[mRamStart + i] = rom.at(i);
     }
 }
 
