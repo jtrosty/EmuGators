@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cpu.h"
+#include "nesemulator.h"
 
 void CPU::reset(Badge<NESEmulator>)
 {
@@ -27,13 +28,49 @@ void CPU::runOpcode(EncodedInstructionType inst)
     }
 }
 
-u8 CPU::getOperand(MemoryAccessMode mode)
+void CPU::normallyIncrementClockCycle(MemoryAccessMode mode)
 {
-    if (mode != MemoryAccessMode::Immediate) {
-	fprintf(stderr, "Only immediate memory access is doable as of now!\n");
+    switch (mode) {
+    case MemoryAccessMode::Immediate:
+    case MemoryAccessMode::Accumulator:
+	mClockCycle += 2;
+	break;
+    case MemoryAccessMode::ZeroPage:
+	mClockCycle += 3;
+	break;
+    default:
+	fprintf(stderr, "Cannot increment clock cycle, memory access mode unimplemented.\n");
 	exit(1);
     }
+}
+
+
+u8 CPU::getOperand(MemoryAccessMode mode)
+{
+    auto& emulator = NESEmulator::the();
+    switch (mode) {
+    case MemoryAccessMode::Accumulator:
+       return mA;
+    case MemoryAccessMode::Immediate:
+	return emulator.bus().readMemory(mPC++);
+    case MemoryAccessMode::ZeroPage:
+       return emulator.bus().readMemory(emulator.bus().readMemory(mPC++));
+    default:
+       fprintf(stderr, "Only immediate and zero page memory access are implemented!\n");
+       exit(1);
+    }
     return mA;
+}
+
+u8 CPU::decode8Bits()
+{
+    return NESEmulator::the().bus().readMemory(mPC++);
+}
+u8 CPU::decode16Bits()
+{
+    auto val = NESEmulator::the().bus().readMemory16Bits(mPC);
+    mPC += 2;
+    return val;
 }
 
 void CPU::ORA(MemoryAccessMode mode)
@@ -99,4 +136,47 @@ void CPU::SBC(MemoryAccessMode mode)
 	mP = ProcessorStatus::Zero;
     if (result & 0x10000000)
 	mP = ProcessorStatus::Negative;
+}
+
+
+void CPU::DEC(MemoryAccessMode mode)
+{
+    u16 address;
+    switch (mode) {
+    case MemoryAccessMode::ZeroPage:
+	address = decode8Bits();
+	break;
+    case MemoryAccessMode::Absolute:
+	address = decode16Bits();
+	break;
+    default:
+	assert(false); // This should not happen!
+    }
+
+    auto& bus = NESEmulator::the().bus();
+    value = bus().readMemory(address);
+    bus().writeMemory(address, 1 + value);
+}
+void CPU::INC(MemoryAccessMode mode)
+{
+    u16 address;
+    switch (mode) {
+    case MemoryAccessMode::ZeroPage:
+	address = decode8Bits();
+	break;
+    case MemoryAccessMode::Absolute:
+	address = decode16Bits();
+	break;
+    default:
+	assert(false); // This should not happen!
+    }
+
+    auto& bus = NESEmulator::the().bus();
+    value = bus().readMemory(address);
+    bus().writeMemory(address, 1 + value);
+}
+
+void CPU::DEX(MemoryAccessMode)
+{
+    mX--;
 }

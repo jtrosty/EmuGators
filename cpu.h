@@ -73,7 +73,8 @@ public:
 	Overflow,
 	Negative,
     };
-    
+    void normallyIncrementClockCycle(MemoryAccessMode mode);
+
     ProcessorStatus& P() { return mP; }
     u8& SP() { return mSP; }
     u16& PC() { return mPC; }
@@ -87,8 +88,10 @@ public:
     u8 X() const { return mX; }
     u8 Y() const { return mY; }
     void runOpcode(EncodedInstructionType);
-
 private:
+    u8 decode8Bits();
+    u16 decode16Bits();
+
     u8 getOperand(MemoryAccessMode);
     // Addition instructions do not currently set a status flag afterward.
     void ORA(MemoryAccessMode);
@@ -98,6 +101,8 @@ private:
     void CMP(MemoryAccessMode);
     void SBC(MemoryAccessMode);
 
+    void DEC(MemoryAccessMode);
+    void DEX(MemoryAccessMode);
     /** These require memory access which we can't do right now
 	void STA(MemoryAccessMode);
 	void LDA(MemoryAccessMode);

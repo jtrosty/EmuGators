@@ -1,6 +1,6 @@
 #include "bus.h"
 
-Bus::Bus() {
+Bus::Bus(Badge<NESEmulator>) {
     // Initialize memory to zero
     memory = new u8[0xFFFF + 1] {0};
 }
@@ -29,6 +29,13 @@ u8 Bus::readMemory(u16 addr) {
     }
     return memory[addr];
 }
+
+u16 Bus::readMemory16Bits(u16 addr) {
+    // lmao
+    u16 value = readMemory(addr) << 8;
+    return value |= readMemory(addr + 1);
+}
+
 
 void Bus::writeMemory(u16 addr, u8 data) {
     if ( addr < ramMirror) {
