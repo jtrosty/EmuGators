@@ -8,6 +8,7 @@ void CPU::reset(Badge<NESEmulator>)
     mP = (ProcessorStatus)0x34; // Why 0x34?
     mA = mX = mY = 0;
     mSP = 0xfd;
+    mPC = NESEmulator::the().bus().ramStart();
     mClockCycle = 0;
 }
 
