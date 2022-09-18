@@ -62,6 +62,16 @@ u8 CPU::getOperand(MemoryAccessMode mode)
     return mA;
 }
 
+u8 CPU::decode8Bits()
+{
+    return NESEmulator::the().bus().readMemory(mPC++);
+}
+u8 CPU::decode16Bits()
+{
+    auto val = NESEmulator::the().bus().readMemory16Bits(mPC);
+    mPC += 2;
+    return val;
+}
 
 void CPU::ORA(MemoryAccessMode mode)
 {
@@ -126,4 +136,47 @@ void CPU::SBC(MemoryAccessMode mode)
 	mP = ProcessorStatus::Zero;
     if (result & 0x10000000)
 	mP = ProcessorStatus::Negative;
+}
+
+
+void CPU::DEC(MemoryAccessMode mode)
+{
+    u16 address;
+    switch (mode) {
+    case MemoryAccessMode::ZeroPage:
+	address = decode8Bits();
+	break;
+    case MemoryAccessMode::Absolute:
+	address = decode16Bits();
+	break;
+    default:
+	assert(false); // This should not happen!
+    }
+
+    auto& bus = NESEmulator::the().bus();
+    value = bus().readMemory(address);
+    bus().writeMemory(address, 1 + value);
+}
+void CPU::INC(MemoryAccessMode mode)
+{
+    u16 address;
+    switch (mode) {
+    case MemoryAccessMode::ZeroPage:
+	address = decode8Bits();
+	break;
+    case MemoryAccessMode::Absolute:
+	address = decode16Bits();
+	break;
+    default:
+	assert(false); // This should not happen!
+    }
+
+    auto& bus = NESEmulator::the().bus();
+    value = bus().readMemory(address);
+    bus().writeMemory(address, 1 + value);
+}
+
+void CPU::DEX(MemoryAccessMode)
+{
+    mX--;
 }
