@@ -67,7 +67,7 @@ u8 CPU::decode8Bits()
 {
     return NESEmulator::the().bus().readMemory(mPC++);
 }
-u8 CPU::decode16Bits()
+u16 CPU::decode16Bits()
 {
     auto val = NESEmulator::the().bus().readMemory16Bits(mPC);
     mPC += 2;
@@ -155,8 +155,8 @@ void CPU::DEC(MemoryAccessMode mode)
     }
 
     auto& bus = NESEmulator::the().bus();
-    value = bus().readMemory(address);
-    bus().writeMemory(address, 1 + value);
+    auto value = bus.readMemory(address);
+    bus.writeMemory(address, 1 + value);
 }
 void CPU::INC(MemoryAccessMode mode)
 {
@@ -173,8 +173,8 @@ void CPU::INC(MemoryAccessMode mode)
     }
 
     auto& bus = NESEmulator::the().bus();
-    value = bus().readMemory(address);
-    bus().writeMemory(address, 1 + value);
+    auto value = bus.readMemory(address);
+    bus.writeMemory(address, 1 + value);
 }
 
 void CPU::DEX(MemoryAccessMode)
