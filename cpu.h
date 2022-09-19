@@ -75,6 +75,9 @@ public:
     };
     void normallyIncrementClockCycle(MemoryAccessMode mode);
 
+
+    void execLoop();
+    
     ProcessorStatus& P() { return mP; }
     u8& SP() { return mSP; }
     u16& PC() { return mPC; }
@@ -119,6 +122,8 @@ private:
     u8 mA;
     u8 mX;
     u8 mY;
+
+    bool mIsRunning;
     
     u32 mClockCycle;
 };

@@ -29,6 +29,15 @@ void CPU::runOpcode(EncodedInstructionType inst)
     }
 }
 
+void CPU::execLoop()
+{
+    auto& bus = NESEmulator::the().bus();
+
+    while (mIsRunning) {
+	runOpcode(EncodedInstructionType(bus.rawMemory()[mPC++]));
+    }
+}
+
 void CPU::normallyIncrementClockCycle(MemoryAccessMode mode)
 {
     switch (mode) {
