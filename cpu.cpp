@@ -190,3 +190,17 @@ void CPU::DEX(MemoryAccessMode)
 {
     mX--;
 }
+
+void CPU::JMP(MemoryAccessMode mode)
+{
+    auto& bus = NESEmulator::the().bus();
+    switch (mode) {
+    case MemoryAccessMode::Absolute: // Find out how these are different
+    case MemoryAccessMode::Indirect: {
+	mPC = bus.readMemory16Bits(bus.readMemory16Bits(mPC));
+	break;
+    }
+    default:
+	assert(false);
+    }
+}

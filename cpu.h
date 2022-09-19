@@ -107,6 +107,8 @@ private:
     void DEC(MemoryAccessMode);
     void DEX(MemoryAccessMode);
     void INC(MemoryAccessMode);
+    void JMP(MemoryAccessMode);
+    
     /** These require memory access which we can't do right now
 	void STA(MemoryAccessMode);
 	void LDA(MemoryAccessMode);
