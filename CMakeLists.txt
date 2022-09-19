@@ -36,12 +36,9 @@ set(PROJECT_SOURCES
         defs.h
         forward.h
         badge.h
-<<<<<<< HEAD
         weather.cpp
         weather.h
-=======
         resource.qrc
->>>>>>> origin/main
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
