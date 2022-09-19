@@ -15,6 +15,7 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS OpenGLWidgets)
 find_package(Qt6 REQUIRED COMPONENTS Gui)
+find_package(Qt6 REQUIRED COMPONENTS Network)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -29,6 +30,8 @@ set(PROJECT_SOURCES
         defs.h
         forward.h
         badge.h
+        weather.cpp
+        weather.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -57,6 +60,7 @@ endif()
 target_link_libraries(Qt_Test PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 target_link_libraries(Qt_Test PRIVATE Qt6::OpenGLWidgets)
 target_link_libraries(Qt_Test PRIVATE Qt6::Gui)
+target_link_libraries(Qt_Test PRIVATE Qt6::Network)
 
 set_target_properties(Qt_Test PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

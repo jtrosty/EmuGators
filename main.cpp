@@ -1,4 +1,5 @@
 #include "window.h"
+#include "weather.h"
 
 #include <QApplication>
 
