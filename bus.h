@@ -52,6 +52,8 @@ public:
     Bus(Badge<NESEmulator>);
     ~Bus();
 
+    u8* rawMemory() { return memory; }
+    
     u16& ramStart() { return mRamStart; }
     u16 ramStart() const { return mRamStart; }
     
