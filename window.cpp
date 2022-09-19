@@ -1,10 +1,21 @@
 #include "window.h"
+#include "weather.h"
+#include "glwidget.h"
+
+#include <QGridLayout>
+#include <QLabel>
+#include <QPushButton>
 
 Window::Window()
 {
+    WeatherManager *weather = new WeatherManager();
+    weather->setup();
     GLWidget* openGL = new GLWidget(this);
     QPushButton *button = new QPushButton(this);
-    button->setText("Push me");
+    button->setText("Push Me!");
+    QLabel *weatherLabel = new QLabel(this);
+    QObject::connect(weather, &WeatherManager::updated, weatherLabel, &QLabel::setText);
+
     QGridLayout* layout = new QGridLayout(this);
     RomLoader* romLoader = new RomLoader();
 
@@ -14,5 +25,6 @@ Window::Window()
     openGL->hasFocus();
     layout->addWidget(openGL, 0, 0);
     layout->addWidget(button, 0, 1);
+    layout->addWidget(weatherLabel, 1, 1);
     setLayout(layout);
 }
