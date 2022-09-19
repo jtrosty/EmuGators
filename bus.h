@@ -39,7 +39,7 @@ class Bus
      */
 
     u8* memory; // Size 0xFFFF
-    u16 ramStart = 			0x0000;
+    u16 mRamStart = 			0x0000;
     u16 ramMirror = 		0x1FFF;
     u16 ppuMirror = 		0x3FFF + 0x2000;
     u16 ppuIOStart = 		0x2000;
@@ -52,6 +52,9 @@ public:
     Bus(Badge<NESEmulator>);
     ~Bus();
 
+    u16& ramStart() { return mRamStart; }
+    u16 ramStart() const { return mRamStart; }
+    
     void loadROM(QByteArray rom);
 
     u8 readMemory(u16 addr);

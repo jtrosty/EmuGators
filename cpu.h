@@ -103,6 +103,7 @@ private:
 
     void DEC(MemoryAccessMode);
     void DEX(MemoryAccessMode);
+    void INC(MemoryAccessMode);
     /** These require memory access which we can't do right now
 	void STA(MemoryAccessMode);
 	void LDA(MemoryAccessMode);
@@ -114,7 +115,7 @@ private:
     
     ProcessorStatus mP;
     u8 mSP;
-    u16 mPC;;
+    u16 mPC;
     u8 mA;
     u8 mX;
     u8 mY;
