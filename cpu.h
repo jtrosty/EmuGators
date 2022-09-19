@@ -6,26 +6,26 @@
 #include "badge.h"
 
 
-#define UNDEFINED_MEMORY_ACCESS_MODE(mode) \
-    fprintf(stderr, "Memory access code number %u failed\n", mode);	\
+#define UNDEFINED_INSTRUCTION(instruction) \
+    fprintf(stderr, "Instruction %08x not found\n", instruction);	\
     assert(false);
 
 
 #define IS_ALU_OPCODE(opcode, offset, memoryAccessMode)		\
     case (unsigned)ALUInstructionOpcodeBase::opcode + offset:	\
     opcode(MemoryAccessMode::memoryAccessMode);	    \
-    break;
+    break
 
 
 
 #define RUN_IF_ALU_OPCODE(opcode) \
-    IS_ALU_OPCODE(opcode, 0x01, XZeroPageIndexed) \
-    IS_ALU_OPCODE(opcode, 0x05, ZeroPage) \
-    IS_ALU_OPCODE(opcode, 0x09, Immediate) \
-    IS_ALU_OPCODE(opcode, 0x0D, Absolute) \
-    IS_ALU_OPCODE(opcode, 0x11, YIndexedIndirect) \
-    IS_ALU_OPCODE(opcode, 0x15, XZeroPageIndexed) \
-    IS_ALU_OPCODE(opcode, 0x19, YAbsoluteIndexed) \
+    IS_ALU_OPCODE(opcode, 0x01, XZeroPageIndexed);	\
+    IS_ALU_OPCODE(opcode, 0x05, ZeroPage);		\
+    IS_ALU_OPCODE(opcode, 0x09, Immediate);		\
+    IS_ALU_OPCODE(opcode, 0x0D, Absolute);		\
+    IS_ALU_OPCODE(opcode, 0x11, YIndexedIndirect);	\
+    IS_ALU_OPCODE(opcode, 0x15, XZeroPageIndexed);	\
+    IS_ALU_OPCODE(opcode, 0x19, YAbsoluteIndexed);	\
     IS_ALU_OPCODE(opcode, 0x1D, XAbsoluteIndexed)
 
 
@@ -48,7 +48,7 @@ public:
     };
 
     
-    enum MemoryAccessMode {
+    enum class MemoryAccessMode {
 	Implicit = 0, 		/* Imp */
 	Accumulator,		/* A */
 	Immediate,		/* #v */
@@ -64,27 +64,55 @@ public:
 	YIndexedIndirect,       /* (d), y */
     };
     
-    
-    u8& P() { return mP; }
+    enum class ProcessorStatus { // TODO(Matt): research specific difference between Negative, Overflow, and Carry
+	Carry,
+	Zero,
+	InterruptDisable,
+	DecimalMode,
+	BreakCommand,
+	Overflow,
+	Negative,
+    };
+    void normallyIncrementClockCycle(MemoryAccessMode mode);
+
+    ProcessorStatus& P() { return mP; }
     u8& SP() { return mSP; }
     u16& PC() { return mPC; }
     u8& A() { return mA; }
     u8& X() { return mX; }
     u8& Y() { return mY; }
-    u8 P() const { return mP; }
+    ProcessorStatus P() const { return mP; }
     u8 SP() const { return mSP; }
     u16 PC() const { return mPC; }
     u8 A() const { return mA; }
     u8 X() const { return mX; }
     u8 Y() const { return mY; }
     void runOpcode(EncodedInstructionType);
-
 private:
+    u8 decode8Bits();
+    u16 decode16Bits();
+
+    u8 getOperand(MemoryAccessMode);
+    // Addition instructions do not currently set a status flag afterward.
+    void ORA(MemoryAccessMode);
     void AND(MemoryAccessMode);
+    void ADC(MemoryAccessMode);
+    void EOR(MemoryAccessMode);
+    void CMP(MemoryAccessMode);
+    void SBC(MemoryAccessMode);
+
+    void DEC(MemoryAccessMode);
+    void DEX(MemoryAccessMode);
+    /** These require memory access which we can't do right now
+	void STA(MemoryAccessMode);
+	void LDA(MemoryAccessMode);
+	
+    */
+    
     // DecodedInstruction decodeInstruction(EncodedInstructionType);
 
     
-    u8 mP;
+    ProcessorStatus mP;
     u8 mSP;
     u16 mPC;;
     u8 mA;

@@ -11,7 +11,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS OpenGLWidgets)
 find_package(Qt6 REQUIRED COMPONENTS Gui)
@@ -23,15 +23,25 @@ set(PROJECT_SOURCES
         window.h
         glwidget.cpp
         glwidget.h
-	nesemulator.cpp
+        nesemulator.cpp
         nesemulator.h
-	cpu.cpp
+        cpu.cpp
         cpu.h
+        romloader.cpp
+        romloader.h
+        bus.cpp
+        bus.h
+        ppu.cpp
+        ppu.h
         defs.h
         forward.h
         badge.h
+<<<<<<< HEAD
         weather.cpp
         weather.h
+=======
+        resource.qrc
+>>>>>>> origin/main
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -17,6 +17,8 @@ Window::Window()
     QObject::connect(weather, &WeatherManager::updated, weatherLabel, &QLabel::setText);
 
     QGridLayout* layout = new QGridLayout(this);
+    RomLoader* romLoader = new RomLoader();
+
 
     QKeyEvent* event;
 
