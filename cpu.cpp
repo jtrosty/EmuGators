@@ -57,14 +57,14 @@ void CPU::normallyIncrementClockCycle(MemoryAccessMode mode)
 
 u8 CPU::getOperand(MemoryAccessMode mode)
 {
-    auto& emulator = NESEmulator::the();
+    auto& bus = NESEmulator::the().bus();
     switch (mode) {
     case MemoryAccessMode::Accumulator:
        return mA;
     case MemoryAccessMode::Immediate:
-	return emulator.bus().readMemory(mPC++);
+	return bus.readMemory(mPC++);
     case MemoryAccessMode::ZeroPage:
-       return emulator.bus().readMemory(emulator.bus().readMemory(mPC++));
+       return bus.readMemory(bus.readMemory(mPC++));
     default:
        fprintf(stderr, "Only immediate and zero page memory access are implemented!\n");
        exit(1);
