@@ -9,20 +9,25 @@
 #include <QJsonObject>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
+#include <QPainter>
 
 class WeatherManager : public QObject {
     Q_OBJECT
 
     QNetworkAccessManager nam;
-    bool raining;
+
+    int zipCode = 32608;
     QString currentWeather;
 
     QScopedPointer<QNetworkReply, QScopedPointerDeleteLater> reply;
 
 public:
-    bool isRaining();
+    void setZip(int zip);
+    int getZip();
     QString getWeather();
-    void setup();
+    void addWeatherEffect(QImage* img);
+public slots:
+    void requestData();
 private slots:
     void httpFinished();
 signals:

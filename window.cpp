@@ -9,7 +9,7 @@
 Window::Window()
 {
     WeatherManager *weather = new WeatherManager();
-    weather->setup();
+    weather->requestData();
     GLWidget* openGL = new GLWidget(this);
     QPushButton *button = new QPushButton(this);
     button->setText("Push Me!");
