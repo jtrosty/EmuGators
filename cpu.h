@@ -4,6 +4,8 @@
 #include "defs.h"
 #include "forward.h"
 #include "badge.h"
+#include "device.h"
+#include <stdio.h>
 
 
 #define UNDEFINED_INSTRUCTION(instruction) \
@@ -29,10 +31,11 @@
     IS_ALU_OPCODE(opcode, 0x1D, XAbsoluteIndexed)
 
 
-class CPU {
+namespace NESEmulator {
+
+class CPU : public Device<CPU> {
 public:
-    CPU(Badge<NESEmulator>) { } 	/* CPU can only be constructed/initialized inside an NESEmulator object */
-    void reset(Badge<NESEmulator>);	/* Can the contents of this just be in the constructor? Is reset ever run outside of powering on the machine? Does it ever truly reboot? */
+    void reset();	/* Can the contents of this just be in the constructor? Is reset ever run outside of powering on the machine? Does it ever truly reboot? */
 
     using EncodedInstructionType = u8;
 
@@ -75,6 +78,9 @@ public:
     };
     void normallyIncrementClockCycle(MemoryAccessMode mode);
 
+
+    void execLoop();
+    
     ProcessorStatus& P() { return mP; }
     u8& SP() { return mSP; }
     u16& PC() { return mPC; }
@@ -104,6 +110,8 @@ private:
     void DEC(MemoryAccessMode);
     void DEX(MemoryAccessMode);
     void INC(MemoryAccessMode);
+    void JMP(MemoryAccessMode);
+    
     /** These require memory access which we can't do right now
 	void STA(MemoryAccessMode);
 	void LDA(MemoryAccessMode);
@@ -119,6 +127,12 @@ private:
     u8 mA;
     u8 mX;
     u8 mY;
+
+    bool mIsRunning;
     
     u32 mClockCycle;
 };
+
+}
+
+using NESEmulator::CPU;

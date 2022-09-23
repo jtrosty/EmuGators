@@ -1,14 +1,9 @@
 #include "cpu.h"
 #include "nesemulator.h"
 
-NESEmulator& NESEmulator::the()
+void NESEmulator::powerOn()
 {
-    static NESEmulator sEmulator;
-    return sEmulator;
+    Bus::the().initialize();
+    CPU::the().reset();
 }
 
-
-NESEmulator::NESEmulator()
-{
-    mCPU.reset({});
-}
