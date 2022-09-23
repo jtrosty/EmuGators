@@ -5,17 +5,8 @@
 #include "forward.h" 
 #include "cpu.h"
 
-class NESEmulator {
-public:
-    static NESEmulator& the();
-    void powerOn();
-    CPU& cpu() { return mCPU; }
-    CPU const& cpu() const { return mCPU; }
-    Bus& bus() { return mBus; }
-    Bus const& bus() const { return mBus; }
-private:
-    NESEmulator();
+namespace NESEmulator {
 
-    CPU mCPU { {} };
-    Bus mBus { {} };
+void powerOn();
+
 };

@@ -3,19 +3,18 @@
 #include "cpu.h"
 #include "nesemulator.h"
 
-void CPU::reset(Badge<NESEmulator>)
+void CPU::reset()
 {
     mP = (ProcessorStatus)0x34; // Why 0x34?
     mA = mX = mY = 0;
     mSP = 0xfd;
-    mPC = NESEmulator::the().bus().ramStart();
+
+    mPC = Bus::the().ramStart(); // NESEmulator::the().bus().ramStart();
     mClockCycle = 0;
 }
 
 void CPU::runOpcode(EncodedInstructionType inst)
 {
-    printf("runOpcode happens with %u\n", (unsigned)inst);
-    
     switch (inst) {
 	RUN_IF_ALU_OPCODE(ORA);
 	RUN_IF_ALU_OPCODE(AND);
@@ -31,10 +30,12 @@ void CPU::runOpcode(EncodedInstructionType inst)
 
 void CPU::execLoop()
 {
-    auto& bus = NESEmulator::the().bus();
+    auto& bus = Bus::the();
 
     while (mIsRunning) {
+	printf("instruction: %08x\n", bus.rawMemory()[mPC]);
 	runOpcode(EncodedInstructionType(bus.rawMemory()[mPC++]));
+	
     }
 }
 
@@ -57,7 +58,7 @@ void CPU::normallyIncrementClockCycle(MemoryAccessMode mode)
 
 u8 CPU::getOperand(MemoryAccessMode mode)
 {
-    auto& bus = NESEmulator::the().bus();
+    auto& bus = Bus::the();
     switch (mode) {
     case MemoryAccessMode::Accumulator:
        return mA;
@@ -74,11 +75,11 @@ u8 CPU::getOperand(MemoryAccessMode mode)
 
 u8 CPU::decode8Bits()
 {
-    return NESEmulator::the().bus().readMemory(mPC++);
+    return Bus::the().readMemory(mPC++);
 }
 u16 CPU::decode16Bits()
 {
-    auto val = NESEmulator::the().bus().readMemory16Bits(mPC);
+    auto val = Bus::the().readMemory16Bits(mPC);
     mPC += 2;
     return val;
 }
@@ -163,7 +164,7 @@ void CPU::DEC(MemoryAccessMode mode)
 	assert(false); // This should not happen!
     }
 
-    auto& bus = NESEmulator::the().bus();
+    auto& bus = Bus::the();
     auto value = bus.readMemory(address);
     bus.writeMemory(address, 1 + value);
 }
@@ -181,7 +182,7 @@ void CPU::INC(MemoryAccessMode mode)
 	assert(false); // This should not happen!
     }
 
-    auto& bus = NESEmulator::the().bus();
+    auto& bus = Bus::the();
     auto value = bus.readMemory(address);
     bus.writeMemory(address, 1 + value);
 }
@@ -193,7 +194,7 @@ void CPU::DEX(MemoryAccessMode)
 
 void CPU::JMP(MemoryAccessMode mode)
 {
-    auto& bus = NESEmulator::the().bus();
+    auto& bus = Bus::the();
     switch (mode) {
     case MemoryAccessMode::Absolute: // Find out how these are different
     case MemoryAccessMode::Indirect: {

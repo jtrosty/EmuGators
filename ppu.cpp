@@ -1,8 +1,9 @@
 #include "ppu.h"
 
-PPU::PPU(QByteArray* glPixelArray, Bus* _bus) {
+namespace NESEmulator {
+
+void PPU::initialize(QByteArray* glPixelArray) {
     pixelData = glPixelArray;
-    bus = _bus;
 }
 
 PPU::~PPU() {
@@ -17,11 +18,11 @@ void PPU::drawSprite(int x, int y) {
 }
 
 void PPU::ppuWriteRegister(u16 address, u8 data) {
-    bus->writeMemory(address, data);
+    Bus::the().writeMemory(address, data);
 }
 
 u8 PPU::ppuReadRegister(u16 address) {
-    return bus->readMemory(address);
+    return Bus::the().readMemory(address);
 }
 
 void PPU::ppuWriteVRAM(u16 address, u8 data) {
@@ -30,5 +31,7 @@ void PPU::ppuWriteVRAM(u16 address, u8 data) {
 
 u8 PPU::ppuReadVRAM(u16 address) {
     return vRam[address];
+}
+
 }
 

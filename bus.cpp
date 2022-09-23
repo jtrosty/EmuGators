@@ -1,6 +1,9 @@
 #include "bus.h"
 
-Bus::Bus(Badge<NESEmulator>) {
+namespace NESEmulator {
+
+void Bus::initialize()
+{
     // Initialize memory to zero
     memory = new u8[0xFFFF + 1] {0};
 }
@@ -46,3 +49,7 @@ void Bus::writeMemory(u16 addr, u8 data) {
     }
     memory[addr] = data;
 }
+
+}
+
+using NESEmulator::Bus;

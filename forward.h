@@ -1,4 +1,6 @@
 #pragma once
 
-class NESEmulator;
+
+namespace NESEmulator {
 class CPU;
+}

@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include "nesemulator.h"
 
 int main(int argc, char *argv[])
 {
@@ -21,10 +22,12 @@ int main(int argc, char *argv[])
     
     const QStringList args = parser.positionalArguments();
 
-    if (args.length() == 0)
-	goto noROM; // only a temporary hack until we finish testing the Qt frontend
+    NESEmulator::powerOn();
+    
+    auto& cpu = CPU::the();
+    cpu.execLoop();
 
-noROM:
+    
     Window w;
     w.show();
     return a.exec();

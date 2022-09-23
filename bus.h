@@ -1,13 +1,16 @@
 #ifndef BUS_H
 #define BUS_H
 
-#include "defs.h"
 #include "badge.h"
+#include "defs.h"
+#include "device.h"
 #include "forward.h"
 #include <QByteArray>
 #include <QDebug>
 
-class Bus
+namespace NESEmulator {
+
+class Bus : public Device<Bus>
 {
     /* Memory
      *RAM
@@ -47,14 +50,13 @@ class Bus
     u16 cartridgeROM = 		0x0800;
     u16 ppuRegisterStart =  0x2000;
     u16 ppuRegisterEnd =    0x3FFF;
-
 public:
-    Bus(Badge<NESEmulator>);
     ~Bus();
-
+    void initialize();
+    void reset() { } // dummy for now
+    
     u8* rawMemory() { return memory; }
     
-    u16& ramStart() { return mRamStart; }
     u16 ramStart() const { return mRamStart; }
     
     void loadROM(QByteArray rom);
@@ -70,4 +72,5 @@ public:
      */
 };
 
+}
 #endif // BUS_H

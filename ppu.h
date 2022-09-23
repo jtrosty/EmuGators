@@ -6,8 +6,9 @@
 #include "defs.h"
 #include "bus.h"
 
+namespace NESEmulator {
 
-class PPU
+class PPU : public Device<PPU>
 {
 private:
     const u32 colors[55] = {
@@ -45,7 +46,7 @@ private:
     u16 paletteMemStart = 0x3F00;
 
 public:
-    PPU(QByteArray* glPixelData, Bus* _bus);
+    void initialize(QByteArray* glPixelData);
     ~PPU();
     void debug_load_vRam();
     void renderNameTable();
@@ -60,4 +61,7 @@ private:
 
 };
 
+}
+
+using NESEmulator::PPU;
 #endif // PPU_H
