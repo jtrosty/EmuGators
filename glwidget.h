@@ -8,6 +8,7 @@
 #include <QImage>
 #include <QPoint>
 #include <QKeyEvent>
+#include <QByteArray>
 
 class GLWidget : public QOpenGLWidget
 {
@@ -43,6 +44,7 @@ public:
 
     // Helper functions
     void debug_updatePixelData();
+    QByteArray getPixelData();
 
     // Protected virtual functions for OpenGL, we do not call these
     protected:

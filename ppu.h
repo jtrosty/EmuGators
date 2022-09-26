@@ -30,18 +30,31 @@ private:
     /*
      * 0x0000- 0x0FFF - Pattern Table 0
      * 0x1000- 0x1FFF - Pattern Table 1
+     * 8 kb total, 4kb section.
+     * 16 by 16 grid of sprite tiles.
+     * each grid of sprites is 8 by 8 pixels.
+     * They are 8 by 8 bitmap. Each tile is stored in 2 bit planes.
+     * the LSB and MSB.
+     * In memory the LSB is stored then the most significant bit.
+     * 16 bytes to store each tile.
+     *
      * 0x2000- 0x23FF - NameTable 0
      * 0x2400- 0x27FF - NameTable 1
      * 0x2800- 0x2BFF - NameTable 2
      * 0x2C00- 0x2FFF - NameTable 3
      *
-     *
-     *
+     * 0x3F00 - 3F10 - Pallate table
+     * 0x3F00 is typically the background. 8 bit value and indexes
+     * a specific color. Each
+     * The first 4 palettes are for background
+     * The last 4 are for foreground.
      *
      *
      *
      */
     u16 spriteStart = 0x0000;
+    u16 patternTable0 = 0x0000;
+    u16 patternTable1 = 0x1000;
     u16 nameTableStart = 0x2000;
     u16 paletteMemStart = 0x3F00;
 
@@ -50,14 +63,18 @@ public:
     ~PPU();
     void debug_load_vRam();
     void renderNameTable();
-    void drawSprite(int x, int y);
-
+    void debug_drawPatternTable(int patternTable);
+    void debug_setPixelPatternTable(int patternTable, u16 x, u16 y, u32 colorValue);
 
 private:
     void ppuWriteRegister(u16 address, u8 data);
     u8 ppuReadRegister(u16 address);
     void ppuWriteVRAM(u16 address, u8 data);
     u8 ppuReadVRAM(u16 address);
+    u8 getPalette(u16 address);
+    u32 debug_patternTable[2][128 *128]; // Each pattern table is 128 pixel wide and tall.
+    void debug_patternTableToPixels();
+    void debug_loadVRam();
 
 };
 

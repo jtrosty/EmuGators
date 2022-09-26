@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/resources">
         <file>roms/nestest.nes</file>
+        <file>roms/DonkeyKongClassics.nes</file>
     </qresource>
 </RCC>
