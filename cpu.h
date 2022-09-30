@@ -6,6 +6,7 @@
 #include "badge.h"
 #include "device.h"
 #include <stdio.h>
+#include "bus.h"
 
 
 #define UNDEFINED_INSTRUCTION(instruction) \
@@ -68,18 +69,26 @@ public:
     };
     
     enum class ProcessorStatus { // TODO(Matt): research specific difference between Negative, Overflow, and Carry
-	Carry,
-	Zero,
-	InterruptDisable,
-	DecimalMode,
-	BreakCommand,
-	Overflow,
-	Negative,
+	Carry = 1 << 0,
+	Zero = 1 << 1,
+	InterruptDisable = 1 << 2,
+	DecimalMode = 1 << 3,
+	BreakCommand = 1 << 4,
+	Overflow = 1 << 5,
+	Negative = 1 << 6,
     };
     void normallyIncrementClockCycle(MemoryAccessMode mode);
 
 
     void execLoop();
+
+    ALWAYS_INLINE void pushByte(byte b) { Bus::the().writeMemory(mSP++, b); }
+    ALWAYS_INLINE u8 popByte() { return Bus::the().readMemory(--mSP); }
+
+    ALWAYS_INLINE void pushPC() { Bus::the().writeMemory(mSP++, mPC); }
+    ALWAYS_INLINE u8 popPC() { return Bus::the().readMemory16Bits(--mSP); }
+
+
     
     ProcessorStatus& P() { return mP; }
     u8& SP() { return mSP; }
@@ -120,7 +129,7 @@ private:
     
     // DecodedInstruction decodeInstruction(EncodedInstructionType);
 
-    
+    void setProcessorStatus(ProcessorStatus);
     ProcessorStatus mP;
     u8 mSP;
     u16 mPC;

@@ -114,11 +114,11 @@ void CPU::ADC(MemoryAccessMode mode)
     u8 operand = getOperand(mode);
     u8 result = mA + operand;
     if (result < mA)
-	mP = ProcessorStatus::Carry;
+	setProcessorStatus(ProcessorStatus::Carry);
     if (mA == 0)
-	mP = ProcessorStatus::Zero;
+	setProcessorStatus(ProcessorStatus::Zero);
     if (result & 0x10000000)
-	mP = ProcessorStatus::Negative;
+	setProcessorStatus(ProcessorStatus::Negative);
 }
 
 void CPU::CMP(MemoryAccessMode mode)
@@ -128,11 +128,11 @@ void CPU::CMP(MemoryAccessMode mode)
     u8 operand = getOperand(mode);
     
     if (mA > operand)
-	mP = ProcessorStatus::Carry;
+	setProcessorStatus(ProcessorStatus::Carry);
     if (mA == operand)
-	mP = ProcessorStatus::Zero;
+	setProcessorStatus(ProcessorStatus::Zero);
     if (operand & 0x10000000)
-	mP = ProcessorStatus::Negative;
+	setProcessorStatus(ProcessorStatus::Negative);
 }
 
 void CPU::SBC(MemoryAccessMode mode)
@@ -142,11 +142,11 @@ void CPU::SBC(MemoryAccessMode mode)
     u8 operand = getOperand(mode);
     u8 result = mA - operand;
     if (result > mA)
-	mP = ProcessorStatus::Carry;
+	setProcessorStatus(ProcessorStatus::Carry);
     if (mA == 0)
-	mP = ProcessorStatus::Zero;
+	setProcessorStatus(ProcessorStatus::Zero);
     if (result & 0x10000000)
-	mP = ProcessorStatus::Negative;
+	setProcessorStatus(ProcessorStatus::Negative);
 }
 
 
