@@ -109,6 +109,8 @@ private:
 
     u8 getOperand(MemoryAccessMode);
     // Addition instructions do not currently set a status flag afterward.
+    void BRK(MemoryAccessMode);
+
     void ORA(MemoryAccessMode);
     void AND(MemoryAccessMode);
     void ADC(MemoryAccessMode);

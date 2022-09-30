@@ -3,19 +3,29 @@
 #include "cpu.h"
 #include "nesemulator.h"
 
+namespace NESEmulator {
+
 void CPU::reset()
 {
     mP = (ProcessorStatus)0x34; // Why 0x34?
     mA = mX = mY = 0;
     mSP = 0xfd;
-
-    mPC = Bus::the().ramStart(); // NESEmulator::the().bus().ramStart();
+    mIsRunning = true;
+    mPC = 0x0c000;//Bus::the().ramStart();
     mClockCycle = 0;
+}
+
+void CPU::setProcessorStatus(ProcessorStatus status)
+{
+    mP = (ProcessorStatus)((unsigned)mP | (unsigned)status);
 }
 
 void CPU::runOpcode(EncodedInstructionType inst)
 {
     switch (inst) {
+    case 0x0:
+	BRK(MemoryAccessMode::Implicit);
+	break;
 	RUN_IF_ALU_OPCODE(ORA);
 	RUN_IF_ALU_OPCODE(AND);
 	RUN_IF_ALU_OPCODE(EOR);
@@ -33,7 +43,7 @@ void CPU::execLoop()
     auto& bus = Bus::the();
 
     while (mIsRunning) {
-	printf("instruction: %08x\n", bus.rawMemory()[mPC]);
+	printf("Program counter: %08x, Instruction: %08x\n", mPC, bus.rawMemory()[mPC]);
 	runOpcode(EncodedInstructionType(bus.rawMemory()[mPC++]));
 	
     }
@@ -82,6 +92,13 @@ u16 CPU::decode16Bits()
     auto val = Bus::the().readMemory16Bits(mPC);
     mPC += 2;
     return val;
+}
+
+void CPU::BRK(MemoryAccessMode)
+{
+    setProcessorStatus(ProcessorStatus::BreakCommand);
+    mClockCycle += 7;
+    printf("Break happens!\n");
 }
 
 void CPU::ORA(MemoryAccessMode mode)
@@ -204,4 +221,6 @@ void CPU::JMP(MemoryAccessMode mode)
     default:
 	assert(false);
     }
+}
+
 }
