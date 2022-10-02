@@ -11,6 +11,7 @@ Window::Window()
     WeatherManager *weather = new WeatherManager();
     weather->requestData();
     GLWidget* openGL = new GLWidget(this);
+    openGL->weather = weather;
     QPushButton *button = new QPushButton(this);
     button->setText("Push Me!");
     QLabel *weatherLabel = new QLabel(this);

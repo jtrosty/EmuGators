@@ -10,14 +10,16 @@
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
 #include <QPainter>
+#include <QRandomGenerator>
 
 class WeatherManager : public QObject {
     Q_OBJECT
 
     QNetworkAccessManager nam;
+    std::vector<QRectF> weatherTargets;
 
-    int zipCode = 32608;
-    QString currentWeather;
+    int zipCode = 31014;
+    QString currentWeather = "unknown";
 
     QScopedPointer<QNetworkReply, QScopedPointerDeleteLater> reply;
 
@@ -28,6 +30,7 @@ public:
     void addWeatherEffect(QImage* img);
 public slots:
     void requestData();
+    void updateWeatherEffect();
 private slots:
     void httpFinished();
 signals:
