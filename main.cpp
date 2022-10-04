@@ -1,3 +1,4 @@
+#include "ppu.h"
 #include "window.h"
 #include "weather.h"
 
@@ -27,6 +28,9 @@ int main(int argc, char *argv[])
     
     auto& cpu = CPU::the();
     cpu.execLoop();
+    auto& ppu = NESEmulator::PPU();
+
+
 
     
     Window w;

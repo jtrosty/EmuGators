@@ -10,6 +10,43 @@ namespace NESEmulator {
 
     }
 
+
+    void PPU::ppuWriteRegister(u16 address, u8 data) {
+        Bus::the().writeMemory(address, data);
+    }
+
+    u8 PPU::ppuReadRegister(u16 address) {
+        return Bus::the().readMemory(address);
+    }
+
+    void PPU::ppuWriteVRAM(u16 address, u8 data) {
+        vRam[address] = data;
+    }
+
+    u8 PPU::ppuReadVRAM(u16 address) {
+        return vRam[address];
+    }
+
+    u8 PPU::getPalette(u16 address) {
+        u8 result = 0x00;
+        return result;
+    }
+
+    void PPU::debug_loadVRam() {
+
+
+    }
+
+    void PPU::debug_patternTableToPixels(int patternTable, int x, int y) {
+        u8* bytePatternTable = (u8*)debug_patternTable[patternTable][0];
+        int offset = x * 4 * 256 + (y * 4);
+        for (int row = 0; row < 128; row++) {
+            for (int col = 0; col < 128; col++) {
+                //pixelData[(offset + (row * 256 * 4)) + (col * 4)] = byte[patternTable][(row * 128) + col];
+            }
+        }
+    }
+
     void PPU::debug_drawPatternTable(int patternTable) {
         // This loops for each of the
 
@@ -56,34 +93,9 @@ namespace NESEmulator {
         debug_patternTable[patternTable][(x * 128) + y] = colorValue;
     }
 
-
-    void PPU::ppuWriteRegister(u16 address, u8 data) {
-        Bus::the().writeMemory(address, data);
-    }
-
-    u8 PPU::ppuReadRegister(u16 address) {
-        return Bus::the().readMemory(address);
-    }
-
-    void PPU::ppuWriteVRAM(u16 address, u8 data) {
-        vRam[address] = data;
-    }
-
-    u8 PPU::ppuReadVRAM(u16 address) {
-        return vRam[address];
-    }
-
-    u8 PPU::getPalette(u16 address) {
-
-    }
-
-    void PPU::debug_patternTableToPixels() {
-
-    }
-
-    void PPU::debug_loadVRam() {
-
-
+    void PPU::debug_loadRomDisplayVram() {
+        RomLoader debug_loadDonkeyKong;
+        debug_loadDonkeyKong.donkeyKongRom;
     }
 
 

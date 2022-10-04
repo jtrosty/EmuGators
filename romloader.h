@@ -10,6 +10,7 @@ class RomLoader
 {
 public:
     QByteArray nesTestRom;
+    QByteArray donkeyKongRom;
     RomLoader();
 };
 

@@ -1,6 +1,12 @@
 <RCC>
     <qresource prefix="/resources">
         <file>roms/nestest.nes</file>
+<<<<<<< HEAD
         <file>roms/DonkeyKongClassics.nes</file>
+=======
+        <file>images/test_cloud.png</file>
+        <file>images/test_rain_1.png</file>
+        <file>images/test_rain_2.png</file>
+>>>>>>> origin
     </qresource>
 </RCC>

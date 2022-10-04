@@ -79,8 +79,13 @@ void GLWidget::paintGL() {
     //glClear(GL_COLOR_BUFFER_BIT);
     debug_updatePixelData();
     QPainter p(this);
-    QImage img(pixelData, width, height, bytesPerLine, QImage::Format_ARGB32);
+    QImage img((const uchar *)(pixelData), width, height, bytesPerLine, QImage::Format_ARGB32);
+
+    weather->addWeatherEffect(&img);
+
     p.drawImage(rect(), img);
+
+
 }
 
 void GLWidget::resizeGL(int w, int h) {

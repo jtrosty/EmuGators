@@ -5,6 +5,7 @@
 
 #include "defs.h"
 #include "bus.h"
+#include "romloader.h"
 
 namespace NESEmulator {
 
@@ -48,10 +49,8 @@ private:
      * a specific color. Each
      * The first 4 palettes are for background
      * The last 4 are for foreground.
-     *
-     *
-     *
      */
+
     u16 spriteStart = 0x0000;
     u16 patternTable0 = 0x0000;
     u16 patternTable1 = 0x1000;
@@ -65,6 +64,7 @@ public:
     void renderNameTable();
     void debug_drawPatternTable(int patternTable);
     void debug_setPixelPatternTable(int patternTable, u16 x, u16 y, u32 colorValue);
+    void debug_loadRomDisplayVram();
 
 private:
     void ppuWriteRegister(u16 address, u8 data);
@@ -73,7 +73,7 @@ private:
     u8 ppuReadVRAM(u16 address);
     u8 getPalette(u16 address);
     u32 debug_patternTable[2][128 *128]; // Each pattern table is 128 pixel wide and tall.
-    void debug_patternTableToPixels();
+    void debug_patternTableToPixels(int patternTable, int x, int y);
     void debug_loadVRam();
 
 };
