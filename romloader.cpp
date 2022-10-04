@@ -3,7 +3,7 @@
 RomLoader::RomLoader() {
     QString path = ":/resources/roms/";
     QString nestest = "nestest.nes";
-    QString donkeyKong = "DonkeykongClassic.nes";
+    QString donkeyKong = "DonkeyKongClassics.nes";
 
     QFile file(path + nestest);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -15,11 +15,11 @@ RomLoader::RomLoader() {
     file.close();
 
     QFile fileDonkey(path + donkeyKong);
-    if (!file.open(QIODevice::ReadOnly)) {
+    if (!fileDonkey.open(QIODevice::ReadOnly)) {
         qInfo("File faield to open");
     }
     else {
-        donkeyKongRom = file.readAll();
+        donkeyKongRom = fileDonkey.readAll();
     }
     fileDonkey.close();
 }

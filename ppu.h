@@ -60,11 +60,13 @@ private:
 public:
     void initialize(u32* glPixelData);
     ~PPU();
-    void debug_load_vRam();
     void renderNameTable();
+
+    void debug_load_vRam();
     void debug_drawPatternTable(int patternTable);
     void debug_setPixelPatternTable(int patternTable, u16 x, u16 y, u32 colorValue);
     void debug_loadRomDisplayVram();
+    void debug_drawToScreen(QByteArray donkeyKong);
 
 private:
     void ppuWriteRegister(u16 address, u8 data);
@@ -74,7 +76,6 @@ private:
     u8 getPalette(u16 address);
     u32 debug_patternTable[2][128 *128]; // Each pattern table is 128 pixel wide and tall.
     void debug_patternTableToPixels(int patternTable, int x, int y);
-    void debug_drawToScreen(QByteArray donkeyKong);
 
 };
 

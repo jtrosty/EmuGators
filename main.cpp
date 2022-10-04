@@ -1,9 +1,11 @@
 #include "ppu.h"
 #include "window.h"
 #include "weather.h"
+#include "romloader.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QDebug>
 #include "nesemulator.h"
 
 int main(int argc, char *argv[])
@@ -25,15 +27,18 @@ int main(int argc, char *argv[])
     const QStringList args = parser.positionalArguments();
 
     NESEmulator::powerOn();
-    
+    RomLoader* romLoader = new RomLoader();
+
     auto& cpu = CPU::the();
-    cpu.execLoop();
     auto& ppu = PPU::the();
+    cpu.execLoop();
+    int testSize = romLoader->nesTestRom.size();
+    qInfo() << "The size of the rom is " << testSize << "\n";
 
+    ppu.debug_drawToScreen(romLoader->donkeyKongRom);
+    u32* pixels;
 
-
-    
-    Window w;
+    Window w(pixels);
     w.show();
     return a.exec();
 }

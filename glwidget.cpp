@@ -1,6 +1,6 @@
 #include "glwidget.h"
 
-GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
+GLWidget::GLWidget(QWidget* parent, u32* _pixelData) : QOpenGLWidget(parent) {
     //setGeometry(20,20, 256, 240);
     //setFixedSize(widthScaled, heightScaled);
     //setMinimumSize(width * scale, height * scale);
@@ -9,7 +9,8 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
     GLWidget::setEnabled(true);
     GLWidget::grabKeyboard();
 
-    pixelData = new uchar[pixelDataLength];
+    _pixelData = new u32[pixelDataLength / 4];
+    pixelData = (uchar*)_pixelData;
     for (int i = 0; i < pixelDataLength; i += 4) {
         pixelData[i] 	 = startB;
         pixelData[i + 1] = startG++;

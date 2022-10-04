@@ -1,7 +1,6 @@
  #ifndef GLWIDGET_H
 #define GLWIDGET_H
 
-#include "weather.h"
 #include <QWidget>
 #include <QOpenGLWidget>
 #include <QPainter>
@@ -10,6 +9,9 @@
 #include <QPoint>
 #include <QKeyEvent>
 #include <QByteArray>
+
+#include "weather.h"
+#include "defs.h"
 
 class GLWidget : public QOpenGLWidget
 {
@@ -35,7 +37,7 @@ public:
 
     WeatherManager* weather = nullptr;
 
-    GLWidget(QWidget* parent);
+    GLWidget(QWidget* parent, u32* _pixelData);
 
     ~GLWidget();
 

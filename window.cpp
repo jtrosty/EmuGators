@@ -6,11 +6,11 @@
 #include <QLabel>
 #include <QPushButton>
 
-Window::Window()
+Window::Window(u32* _pixelData)
 {
     WeatherManager *weather = new WeatherManager();
     weather->requestData();
-    GLWidget* openGL = new GLWidget(this);
+    GLWidget* openGL = new GLWidget(this, _pixelData);
     openGL->weather = weather;
     QPushButton *button = new QPushButton(this);
     button->setText("Push Me!");
@@ -18,8 +18,6 @@ Window::Window()
     QObject::connect(weather, &WeatherManager::updated, weatherLabel, &QLabel::setText);
 
     QGridLayout* layout = new QGridLayout(this);
-    RomLoader* romLoader = new RomLoader();
-
 
     QKeyEvent* event;
 

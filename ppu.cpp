@@ -37,21 +37,23 @@ namespace NESEmulator {
         int chrRomSize = 0x01 * (8000); // 8 kb time number of prg rom secions
         int prgRomStart = 16 + 512;
         int chrRomStart = prgRomStart + prgRomSize;
+        int sizeArray = donkeyKong.size();
         // Load pattern table
         for (int i = 0; i < chrRomSize; i++) {
             vRam[i] = donkeyKong[chrRomStart + i];
         }
         debug_drawPatternTable(1);
         debug_drawPatternTable(2);
-
+        debug_patternTableToPixels(1, 0, 0);
+        debug_patternTableToPixels(1, 0, 128);
     }
 
     void PPU::debug_patternTableToPixels(int patternTable, int x, int y) {
-        u8* bytePatternTable = (u8*)debug_patternTable[patternTable][0];
+        //u8* bytePatternTable = debug_patternTable[patternTable][0];
         int offset = (x * 256) + y;
         for (int row = 0; row < 128; row++) {
             for (int col = 0; col < 128; col++) {
-                pixelData[(offset + (row * 256)) + (col)] = bytePatternTable[(row * 128) + col];
+                pixelData[(offset + (row * 256)) + (col)] = debug_patternTable[patternTable][(row * 128) + col];
             }
         }
     }
