@@ -9,20 +9,28 @@
 #include <QJsonObject>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
+#include <QPainter>
+#include <QRandomGenerator>
 
 class WeatherManager : public QObject {
     Q_OBJECT
 
     QNetworkAccessManager nam;
-    bool raining;
-    QString currentWeather;
+    std::vector<QRectF> weatherTargets;
+
+    int zipCode = 31014;
+    QString currentWeather = "unknown";
 
     QScopedPointer<QNetworkReply, QScopedPointerDeleteLater> reply;
 
 public:
-    bool isRaining();
+    void setZip(int zip);
+    int getZip();
     QString getWeather();
-    void setup();
+    void addWeatherEffect(QImage* img);
+public slots:
+    void requestData();
+    void updateWeatherEffect();
 private slots:
     void httpFinished();
 signals:

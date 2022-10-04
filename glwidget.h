@@ -1,6 +1,7 @@
-#ifndef GLWIDGET_H
+ #ifndef GLWIDGET_H
 #define GLWIDGET_H
 
+#include "weather.h"
 #include <QWidget>
 #include <QOpenGLWidget>
 #include <QPainter>
@@ -30,6 +31,8 @@ public:
     uchar inputX = 0;
     uchar inputY = 0;
     uint pixelDataLength = width * height * bytesPerPixel;
+
+    WeatherManager* weather = nullptr;
 
     GLWidget(QWidget* parent);
 
