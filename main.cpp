@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     
     auto& cpu = CPU::the();
     cpu.execLoop();
-    auto& ppu = NESEmulator::PPU();
+    auto& ppu = PPU::the();
 
 
 

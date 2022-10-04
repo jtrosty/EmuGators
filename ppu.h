@@ -24,7 +24,7 @@ private:
         0x005800ff, 0x00fcfcff, 0x00e8d8ff, 0x008888ff, 0x004058ff, 0xf8d8f8ff,
         0x787878ff
     };
-    QByteArray* pixelData;
+    u32* pixelData;
     Bus* bus;
 
     u8 vRam[0x4000] {0};
@@ -58,7 +58,7 @@ private:
     u16 paletteMemStart = 0x3F00;
 
 public:
-    void initialize(QByteArray* glPixelData);
+    void initialize(u32* glPixelData);
     ~PPU();
     void debug_load_vRam();
     void renderNameTable();
@@ -74,7 +74,7 @@ private:
     u8 getPalette(u16 address);
     u32 debug_patternTable[2][128 *128]; // Each pattern table is 128 pixel wide and tall.
     void debug_patternTableToPixels(int patternTable, int x, int y);
-    void debug_loadVRam();
+    void debug_drawToScreen(QByteArray donkeyKong);
 
 };
 

@@ -2,7 +2,7 @@
 
 namespace NESEmulator {
 
-    void PPU::initialize(QByteArray* glPixelArray) {
+    void PPU::initialize(u32* glPixelArray) {
         pixelData = glPixelArray;
     }
 
@@ -32,17 +32,26 @@ namespace NESEmulator {
         return result;
     }
 
-    void PPU::debug_loadVRam() {
-
+    void PPU::debug_drawToScreen(QByteArray donkeyKong) {
+        int prgRomSize = 0x1A * (16000); // 16 kb time number of prg rom secions
+        int chrRomSize = 0x01 * (8000); // 8 kb time number of prg rom secions
+        int prgRomStart = 16 + 512;
+        int chrRomStart = prgRomStart + prgRomSize;
+        // Load pattern table
+        for (int i = 0; i < chrRomSize; i++) {
+            vRam[i] = donkeyKong[chrRomStart + i];
+        }
+        debug_drawPatternTable(1);
+        debug_drawPatternTable(2);
 
     }
 
     void PPU::debug_patternTableToPixels(int patternTable, int x, int y) {
         u8* bytePatternTable = (u8*)debug_patternTable[patternTable][0];
-        int offset = x * 4 * 256 + (y * 4);
+        int offset = (x * 256) + y;
         for (int row = 0; row < 128; row++) {
             for (int col = 0; col < 128; col++) {
-                //pixelData[(offset + (row * 256 * 4)) + (col * 4)] = byte[patternTable][(row * 128) + col];
+                pixelData[(offset + (row * 256)) + (col)] = bytePatternTable[(row * 128) + col];
             }
         }
     }

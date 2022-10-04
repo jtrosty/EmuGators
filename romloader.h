@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QString>
 #include <QDebug>
+#include "defs.h"
 
 
 class RomLoader
@@ -11,6 +12,7 @@ class RomLoader
 public:
     QByteArray nesTestRom;
     QByteArray donkeyKongRom;
+    u8* donkeyKongBytes;
     RomLoader();
 };
 
