@@ -18,7 +18,8 @@ class GLWidget : public QOpenGLWidget
     Q_OBJECT
 public:
     // VARIABLES
-    uchar* pixelData;
+    //uchar* pixelData;
+    u32* pixelData;
     uchar startR = 0xFF;
     uchar startB = 0x00;
     uchar startG = 0x00;

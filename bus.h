@@ -42,7 +42,7 @@ class Bus : public Device<Bus>
      */
 
     u8* memory; // Size 0xFFFF
-    u16 mRamStart = 			0x0000;
+    u16 mRamStart = 		0x0000;
     u16 ramMirror = 		0x1FFF;
     u16 ppuMirror = 		0x3FFF + 0x2000;
     u16 ppuIOStart = 		0x2000;

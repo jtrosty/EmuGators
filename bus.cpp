@@ -17,7 +17,7 @@ void Bus::loadROM(QByteArray rom) {
         if (mRamStart + i >= 0xFFFA) {
             qInfo("Rom load violated address Rom space");
         }
-        memory[mRamStart + i] = rom.at(i);
+        memory[cartridgeROM + i] = rom.at(i);
     }
 }
 

@@ -15,7 +15,8 @@ int main(int argc, char *argv[])
     QApplication::setApplicationName("NES Emulator");
     QApplication::setApplicationVersion("!Pre-alpha, if that!");
     
-    QCommandLineParser parser;
+    QCommandLineParser parser
+;
     parser.setApplicationDescription("NES Emulator");
     parser.addHelpOption();
     parser.addVersionOption();
@@ -35,10 +36,16 @@ int main(int argc, char *argv[])
     int testSize = romLoader->nesTestRom.size();
     qInfo() << "The size of the rom is " << testSize << "\n";
 
-    ppu.debug_drawToScreen(romLoader->donkeyKongRom);
-    u32* pixels;
+    //int numOfPixels = 256 * 240;
+    int numOfPixels = 128 * 128;
+    u32* pixels = new u32[numOfPixels];
+    for (int i = 0; i < numOfPixels; i++) {
+        pixels[i] = 0;
+    }
+    ppu.initialize(pixels);
 
     Window w(pixels);
+    ppu.debug_drawToScreen(romLoader->donkeyKongRom);
     w.show();
     return a.exec();
 }
