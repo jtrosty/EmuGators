@@ -19,6 +19,10 @@
     opcode(MemoryAccessMode::memoryAccessMode);	    \
     break
 
+#define IS_OPCODE(instruction, opcode, memoryAccessMode) \
+    case opcode: \
+    instruction(MemoryAccessMode::memoryAccessMode);	\
+    break
 
 
 #define RUN_IF_ALU_OPCODE(opcode) \
@@ -68,16 +72,18 @@ public:
 	YIndexedIndirect,       /* (d), y */
     };
     
-    enum class ProcessorStatus { // TODO(Matt): research specific difference between Negative, Overflow, and Carry
+    enum class ProcessorStatus {
 	Carry = 1 << 0,
 	Zero = 1 << 1,
 	InterruptDisable = 1 << 2,
 	DecimalMode = 1 << 3,
 	BreakCommand = 1 << 4,
-	Overflow = 1 << 5,
-	Negative = 1 << 6,
+	Overflow = 1 << 6,
+	Negative = 1 << 7,
     };
-    void normallyIncrementClockCycle(MemoryAccessMode mode);
+    
+    // Its not this simple!
+    void normallyIncrementClockCycle(MemoryAccessMode mode, u8 timeOffset = 0);
 
 
     void execLoop();
@@ -85,8 +91,8 @@ public:
     ALWAYS_INLINE void pushByte(byte b) { Bus::the().writeMemory(mSP++, b); }
     ALWAYS_INLINE u8 popByte() { return Bus::the().readMemory(--mSP); }
 
-    ALWAYS_INLINE void pushPC() { Bus::the().writeMemory(mSP++, mPC); }
-    ALWAYS_INLINE u8 popPC() { return Bus::the().readMemory16Bits(--mSP); }
+    ALWAYS_INLINE void pushWord(u16 word) { Bus::the().writeMemory16Bits(mSP, word); mSP += 2; }
+    ALWAYS_INLINE u16 popWord() { return Bus::the().readMemory16Bits(mSP -= 2); }
 
 
     
@@ -108,30 +114,78 @@ private:
     u16 decode16Bits();
 
     u8 getOperand(MemoryAccessMode);
+    u16 getAddressOperand(MemoryAccessMode);
+
+    void setOrClearStatusIf(bool cond, ProcessorStatus);
     // Addition instructions do not currently set a status flag afterward.
     void BRK(MemoryAccessMode);
+    void RTS(MemoryAccessMode);
+    void PHA(MemoryAccessMode);
+    void PLP(MemoryAccessMode);
+    void CLV(MemoryAccessMode);
+    void CLC(MemoryAccessMode);
+    void CLD(MemoryAccessMode);
+    void LSR(MemoryAccessMode);
+    void ASL(MemoryAccessMode);
 
     void ORA(MemoryAccessMode);
     void AND(MemoryAccessMode);
     void ADC(MemoryAccessMode);
+    void ADCImpl(u8 operand);
+    void LDA(MemoryAccessMode);
     void EOR(MemoryAccessMode);
     void CMP(MemoryAccessMode);
+    void CPX(MemoryAccessMode);
+    void CPY(MemoryAccessMode);
     void SBC(MemoryAccessMode);
+    void STA(MemoryAccessMode);
+    void STX(MemoryAccessMode);
+    void STY(MemoryAccessMode);
+    void BIT(MemoryAccessMode);
 
     void DEC(MemoryAccessMode);
     void DEX(MemoryAccessMode);
+    void DEY(MemoryAccessMode);
     void INC(MemoryAccessMode);
+    void INX(MemoryAccessMode);
+    void INY(MemoryAccessMode);
     void JMP(MemoryAccessMode);
+    void LDX(MemoryAccessMode);
+    void LDY(MemoryAccessMode);
+    void JSR(MemoryAccessMode);
+    void NOP(MemoryAccessMode);
+    void SED(MemoryAccessMode);
+    void SEC(MemoryAccessMode);
+    void SEI(MemoryAccessMode);
+    void PHP(MemoryAccessMode);
+    void PLA(MemoryAccessMode);
+    void BCS(MemoryAccessMode);
+    void BCC(MemoryAccessMode);
+    void BEQ(MemoryAccessMode);
+    void BNE(MemoryAccessMode);
+    void BVS(MemoryAccessMode);
+    void BVC(MemoryAccessMode);
+    void BPL(MemoryAccessMode);
+    void BMI(MemoryAccessMode);
+
+    void TAY(MemoryAccessMode);
+    void TAX(MemoryAccessMode);
+    void TXA(MemoryAccessMode);
+    void TYA(MemoryAccessMode);
+    void TSX(MemoryAccessMode);
+    void TXS(MemoryAccessMode);
+
     
     /** These require memory access which we can't do right now
 	void STA(MemoryAccessMode);
-	void LDA(MemoryAccessMode);
 	
     */
     
     // DecodedInstruction decodeInstruction(EncodedInstructionType);
 
     void setProcessorStatus(ProcessorStatus);
+    void clearProcessorStatus(ProcessorStatus);
+    ALWAYS_INLINE bool processorStatusHas(ProcessorStatus status) { return (unsigned)mP & (unsigned)status; }
     ProcessorStatus mP;
     u8 mSP;
     u16 mPC;
