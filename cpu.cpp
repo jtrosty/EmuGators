@@ -35,114 +35,42 @@ void CPU::setOrClearStatusIf(bool cond, ProcessorStatus status)
 void CPU::runOpcode(EncodedInstructionType inst)
 {
     switch (inst) {
-    case 0x0:
-	BRK(MemoryAccessMode::Implicit);
-	break;
-    case 0x4e:
-	PHA(MemoryAccessMode::Implicit);
-	break;
-    case 0x4c:
-	JMP(MemoryAccessMode::Absolute);
-	break;
-    case 0xb8:
-	CLV(MemoryAccessMode::Implicit);
-	break;
-    case 0x18:
-	CLC(MemoryAccessMode::Implicit);
-	break;
-    case 0xd8:
-	CLD(MemoryAccessMode::Implicit);
-	break;
-    case 0x60:
-	RTS(MemoryAccessMode::Implicit);
-	break;
-    case 0xa0:
-	LDY(MemoryAccessMode::Immediate);
-	break;
-    case 0xa2:
-	LDX(MemoryAccessMode::Immediate);
-	break;
-    case 0x20:
-	JSR(MemoryAccessMode::Absolute);
-	break;
-    case 0xea:
-	NOP(MemoryAccessMode::Implicit);
-	break;
-    case 0x38:
-	SEC(MemoryAccessMode::Implicit);
-	break;
-    case 0x78:
-	SEI(MemoryAccessMode::Implicit);
-	break;
-    case 0xF8:
-	SED(MemoryAccessMode::Implicit);
-	break;
-    case 0x08:
-	PHP(MemoryAccessMode::Implicit);
-	break;
-    case 0x68:
-	PLA(MemoryAccessMode::Implicit);
-	break;
-    case 0x48:
-	PHA(MemoryAccessMode::Implicit);
-	break;
-    case 0x28:
-	PLP(MemoryAccessMode::Implicit);
-	break;
-    case 0xb0:
-	BCS(MemoryAccessMode::Relative);
-	break;
-    case 0x90:
-	BCC(MemoryAccessMode::Relative);
-	break;
-    case 0xf0:
-	BEQ(MemoryAccessMode::Relative);
-	break;
-    case 0xd0:
-	BNE(MemoryAccessMode::Relative);
-	break;
-    case 0x24:
-	BIT(MemoryAccessMode::ZeroPage);
-	break;
-    case 0x2c:
-	BIT(MemoryAccessMode::Absolute);
-	break;
-    case 0x70:
-	BVS(MemoryAccessMode::Relative);
-	break;
-    case 0x50:
-	BVC(MemoryAccessMode::Relative);
-	break;
-    case 0x10:
-	BPL(MemoryAccessMode::Relative);
-	break;
-    case 0x30:
-	BMI(MemoryAccessMode::Relative);
-	break;
-    case 0xc0:
-	CPY(MemoryAccessMode::Immediate);
-	break;
-    case 0xe0:
-	CPX(MemoryAccessMode::Immediate);
-	break;
-    case 0x84:
-	STY(MemoryAccessMode::ZeroPage);
-	break;
-    case 0x86:
-	STX(MemoryAccessMode::ZeroPage);
-	break;
-    case 0xc8:
-	INY(MemoryAccessMode::Implicit);
-	break;
-    case 0xe8:
-	INX(MemoryAccessMode::Implicit);
-	break;
-    case 0x88:
-	DEY(MemoryAccessMode::Implicit);
-	break;
-    case 0xca:
-	DEX(MemoryAccessMode::Implicit);
-	break;
+	IS_OPCODE(BRK, 0x0, Implicit);
+	IS_OPCODE(PHA, 0x4e, Implicit);
+	IS_OPCODE(JMP, 0x4c, Absolute);
+	IS_OPCODE(CLV, 0xb8, Implicit);
+	IS_OPCODE(CLC, 0x18, Implicit);
+	IS_OPCODE(CLD, 0xd8, Implicit);
+	IS_OPCODE(RTS, 0x60, Implicit);
+	IS_OPCODE(LDY, 0xa0, Immediate);
+	IS_OPCODE(LDX, 0xa2, Immediate);
+	IS_OPCODE(JSR, 0x20, Absolute);
+	IS_OPCODE(NOP, 0xea, Implicit);
+	IS_OPCODE(SEC, 0x38, Implicit);
+	IS_OPCODE(SEI, 0x78, Implicit);
+	IS_OPCODE(SED, 0xF8, Implicit);
+	IS_OPCODE(PHP, 0x08, Implicit);
+	IS_OPCODE(PLA, 0x68, Implicit);
+	IS_OPCODE(PHA, 0x48, Implicit);
+	IS_OPCODE(PLP, 0x28, Implicit);
+	IS_OPCODE(BCS, 0xb0, Relative);
+	IS_OPCODE(BCC, 0x90, Relative);
+	IS_OPCODE(BEQ, 0xf0, Relative);
+	IS_OPCODE(BNE, 0xd0, Relative);
+	IS_OPCODE(BIT, 0x24, ZeroPage);
+	IS_OPCODE(BIT, 0x2c, Absolute);
+	IS_OPCODE(BVS, 0x70, Relative);
+	IS_OPCODE(BVC, 0x50, Relative);
+	IS_OPCODE(BPL, 0x10, Relative);
+	IS_OPCODE(BMI, 0x30, Relative);
+	IS_OPCODE(CPY, 0xc0, Immediate);
+	IS_OPCODE(CPX, 0xe0, Immediate);
+	IS_OPCODE(STY, 0x84, ZeroPage);
+	IS_OPCODE(STX, 0x86, ZeroPage);
+	IS_OPCODE(INY, 0xc8, Implicit);
+	IS_OPCODE(INX, 0xe8, Implicit);
+	IS_OPCODE(DEY, 0x88, Implicit);
+	IS_OPCODE(DEX, 0xca, Implicit);
 	IS_OPCODE(STX, 0x8e, Absolute);
 	IS_OPCODE(LDX, 0xae, Absolute);
 	IS_OPCODE(TAX, 0xaa, Implicit);
@@ -784,5 +712,7 @@ void CPU::TXS(MemoryAccessMode)
     mPC++;
     mClockCycle += 2;
 }
+
+
 
 }
