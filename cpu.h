@@ -85,14 +85,16 @@ public:
     // Its not this simple!
     void normallyIncrementClockCycle(MemoryAccessMode mode, u8 timeOffset = 0);
 
+    void printStack(u8 entries);
 
     void execLoop();
+    void pushByte(byte b);
+    u8 popByte();
+    u8 peekByte();
 
-    ALWAYS_INLINE void pushByte(byte b) { Bus::the().writeMemory(mSP++, b); }
-    ALWAYS_INLINE u8 popByte() { return Bus::the().readMemory(--mSP); }
-
-    ALWAYS_INLINE void pushWord(u16 word) { Bus::the().writeMemory16Bits(mSP, word); mSP += 2; }
-    ALWAYS_INLINE u16 popWord() { return Bus::the().readMemory16Bits(mSP -= 2); }
+    void pushWord(u16 word);
+    u16 popWord();
+    u16 peekWord();
 
 
     
@@ -115,18 +117,28 @@ private:
 
     u8 getOperand(MemoryAccessMode);
     u16 getAddressOperand(MemoryAccessMode);
-
+    
     void setOrClearStatusIf(bool cond, ProcessorStatus);
     // Addition instructions do not currently set a status flag afterward.
     void BRK(MemoryAccessMode);
     void RTS(MemoryAccessMode);
+    void RTI(MemoryAccessMode);
     void PHA(MemoryAccessMode);
     void PLP(MemoryAccessMode);
     void CLV(MemoryAccessMode);
     void CLC(MemoryAccessMode);
     void CLD(MemoryAccessMode);
+
+    enum class ShiftType {
+	Rotate,
+	Arithmetic,
+    };
+    void leftShiftImpl(MemoryAccessMode, ShiftType);
+    void rightShiftImpl(MemoryAccessMode, ShiftType);
     void LSR(MemoryAccessMode);
     void ASL(MemoryAccessMode);
+    void ROR(MemoryAccessMode);
+    void ROL(MemoryAccessMode);
 
     void ORA(MemoryAccessMode);
     void AND(MemoryAccessMode);
