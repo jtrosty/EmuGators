@@ -26,11 +26,11 @@
 
 
 #define RUN_IF_ALU_OPCODE(opcode) \
-    IS_ALU_OPCODE(opcode, 0x01, XZeroPageIndexed);	\
+    IS_ALU_OPCODE(opcode, 0x01, XIndirectIndexed);	\
     IS_ALU_OPCODE(opcode, 0x05, ZeroPage);		\
     IS_ALU_OPCODE(opcode, 0x09, Immediate);		\
     IS_ALU_OPCODE(opcode, 0x0D, Absolute);		\
-    IS_ALU_OPCODE(opcode, 0x11, YIndexedIndirect);	\
+    IS_ALU_OPCODE(opcode, 0x11, YIndirectIndexed);	\
     IS_ALU_OPCODE(opcode, 0x15, XZeroPageIndexed);	\
     IS_ALU_OPCODE(opcode, 0x19, YAbsoluteIndexed);	\
     IS_ALU_OPCODE(opcode, 0x1D, XAbsoluteIndexed)
@@ -68,8 +68,8 @@ public:
 	YZeroPageIndexed,       /* d, y */
 	XAbsoluteIndexed,	/* a, x */
 	YAbsoluteIndexed,       /* a, y */
-	XIndexedIndirect,       /* (d), x */
-	YIndexedIndirect,       /* (d), y */
+	XIndirectIndexed,       /* (d, x) */
+	YIndirectIndexed,       /* (d), y */
     };
     
     enum class ProcessorStatus {
