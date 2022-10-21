@@ -55,12 +55,12 @@ u8 Bus::readMemory(u16 addr) {
 u16 Bus::readMemory16Bits(u16 addr) {
     // lmao
     u16 value = readMemory(addr);
-    return value | readMemory(addr + 1) << 8;
+    return value | (readMemory(addr + 1) << 8);
 }
 
 void Bus::writeMemory16Bits(u16 addr, u16 data) {
-    writeMemory(addr, (data & 0x00ff));
-    writeMemory(addr + 1, (data & 0xff00) >> 8);
+    writeMemory(addr, data & 0xff);
+    writeMemory(addr + 1, data >> 8);
 }
 
 
