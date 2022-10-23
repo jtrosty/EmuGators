@@ -84,6 +84,7 @@ void CPU::runOpcode(EncodedInstructionType inst)
 	IS_OPCODE(CLV, 0xb8, Implicit);
 	IS_OPCODE(CLC, 0x18, Implicit);
 	IS_OPCODE(CLD, 0xd8, Implicit);
+	IS_OPCODE(CLI, 0x58, Implicit);
 	IS_OPCODE(RTS, 0x60, Implicit);
 	IS_OPCODE(RTI, 0x40, Implicit);
 	IS_OPCODE(LDY, 0xa0, Immediate);
@@ -648,6 +649,10 @@ void CPU::CLC(MemoryAccessMode)
 void CPU::CLD(MemoryAccessMode)
 {
     clearProcessorStatus(ProcessorStatus::DecimalMode);
+}
+void CPU::CLI(MemoryAccessMode)
+{
+    clearProcessorStatus(ProcessorStatus::InterruptDisable);
 }
 
 void CPU::RTS(MemoryAccessMode)

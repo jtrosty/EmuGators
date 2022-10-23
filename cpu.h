@@ -128,6 +128,7 @@ private:
     void CLV(MemoryAccessMode);
     void CLC(MemoryAccessMode);
     void CLD(MemoryAccessMode);
+    void CLI(MemoryAccessMode);
 
     enum class ShiftType {
 	Rotate,
