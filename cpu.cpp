@@ -585,24 +585,28 @@ void CPU::DEX(MemoryAccessMode)
     mX--;
     setOrClearStatusIf(mX == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mX & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += 2;
 }
 void CPU::DEY(MemoryAccessMode)
 {
     mY--;
     setOrClearStatusIf(mY == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mY & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += 2;
 }
 void CPU::INX(MemoryAccessMode)
 {
     mX++;
     setOrClearStatusIf(mX == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mX & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += 2;
 }
 void CPU::INY(MemoryAccessMode)
 {
     mY++;
     setOrClearStatusIf(mY == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mY & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += 2;
 }
 
 void CPU::JMP(MemoryAccessMode mode)
@@ -610,10 +614,12 @@ void CPU::JMP(MemoryAccessMode mode)
     auto& bus = Bus::the();
     switch (mode) {
     case MemoryAccessMode::Absolute: {
+	mClockCycle += 3;
 	mPC = bus.readMemory16Bits(mPC);
 	break;
     }
     case MemoryAccessMode::Indirect: {
+	mClockCycle += 5;
 	printf("The argument is: %08x\n", bus.readMemory16Bits(mPC));
 	u16 address = bus.readMemory16Bits(mPC);
 	if ((address & 0xff) == 0xff) {
@@ -696,6 +702,7 @@ void CPU::JSR(MemoryAccessMode)
     printStack(10);
     u16 destination = Bus::the().readMemory16Bits(mPC);
     mPC = destination;
+    mClockCycle += 6;
 }
 
 void CPU::NOP(MemoryAccessMode)
