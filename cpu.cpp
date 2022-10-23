@@ -640,19 +640,23 @@ void CPU::JMP(MemoryAccessMode mode)
 void CPU::CLV(MemoryAccessMode)
 {
     clearProcessorStatus(ProcessorStatus::Overflow);
+    mClockCycle += 2;
 }
 
 void CPU::CLC(MemoryAccessMode)
 {
     clearProcessorStatus(ProcessorStatus::Carry);
+    mClockCycle += 2;
 }
 void CPU::CLD(MemoryAccessMode)
 {
     clearProcessorStatus(ProcessorStatus::DecimalMode);
+    mClockCycle += 2;
 }
 void CPU::CLI(MemoryAccessMode)
 {
     clearProcessorStatus(ProcessorStatus::InterruptDisable);
+    mClockCycle += 2;
 }
 
 void CPU::RTS(MemoryAccessMode)
