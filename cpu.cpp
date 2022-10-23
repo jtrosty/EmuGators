@@ -369,6 +369,8 @@ void CPU::BRK(MemoryAccessMode)
     
     mClockCycle += 7;
     printf("Break happens!\n");
+    // How should BRK quit the system if at all?
+    exit(1);
 }
 
 void CPU::PHA(MemoryAccessMode)
