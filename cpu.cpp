@@ -919,11 +919,7 @@ void CPU::TSX(MemoryAccessMode)
 }
 void CPU::TXS(MemoryAccessMode)
 {
-    //printf("SP before copy: %08x, word is %08x\n", mSP, peekWord());
     mSP = mX;
-    //printf("SP after copy: %08x, word is %08x\n", mSP, peekWord());
-    //exit(1);
-
     mClockCycle += 2;
 }
 
