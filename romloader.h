@@ -8,8 +8,12 @@
 
 class RomLoader
 {
-public:
     QByteArray nesTestRom;
+public:
+    
+    QByteArray& nesROM() { return nesTestRom; }
+    QByteArray const& nesROM() const { return nesTestRom; }
+
     RomLoader();
 };
 

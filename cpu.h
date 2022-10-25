@@ -6,6 +6,7 @@
 #include "badge.h"
 #include "device.h"
 #include <stdio.h>
+#include "bus.h"
 
 
 #define UNDEFINED_INSTRUCTION(instruction) \
@@ -18,14 +19,18 @@
     opcode(MemoryAccessMode::memoryAccessMode);	    \
     break
 
+#define IS_OPCODE(instruction, opcode, memoryAccessMode) \
+    case opcode: \
+    instruction(MemoryAccessMode::memoryAccessMode);	\
+    break
 
 
 #define RUN_IF_ALU_OPCODE(opcode) \
-    IS_ALU_OPCODE(opcode, 0x01, XZeroPageIndexed);	\
+    IS_ALU_OPCODE(opcode, 0x01, XIndirectIndexed);	\
     IS_ALU_OPCODE(opcode, 0x05, ZeroPage);		\
     IS_ALU_OPCODE(opcode, 0x09, Immediate);		\
     IS_ALU_OPCODE(opcode, 0x0D, Absolute);		\
-    IS_ALU_OPCODE(opcode, 0x11, YIndexedIndirect);	\
+    IS_ALU_OPCODE(opcode, 0x11, YIndirectIndexed);	\
     IS_ALU_OPCODE(opcode, 0x15, XZeroPageIndexed);	\
     IS_ALU_OPCODE(opcode, 0x19, YAbsoluteIndexed);	\
     IS_ALU_OPCODE(opcode, 0x1D, XAbsoluteIndexed)
@@ -63,23 +68,35 @@ public:
 	YZeroPageIndexed,       /* d, y */
 	XAbsoluteIndexed,	/* a, x */
 	YAbsoluteIndexed,       /* a, y */
-	XIndexedIndirect,       /* (d), x */
-	YIndexedIndirect,       /* (d), y */
+	XIndirectIndexed,       /* (d, x) */
+	YIndirectIndexed,       /* (d), y */
     };
     
-    enum class ProcessorStatus { // TODO(Matt): research specific difference between Negative, Overflow, and Carry
-	Carry,
-	Zero,
-	InterruptDisable,
-	DecimalMode,
-	BreakCommand,
-	Overflow,
-	Negative,
+    enum class ProcessorStatus {
+	Carry = 1 << 0,
+	Zero = 1 << 1,
+	InterruptDisable = 1 << 2,
+	DecimalMode = 1 << 3,
+	BreakCommand = 1 << 4,
+	Overflow = 1 << 6,
+	Negative = 1 << 7,
     };
-    void normallyIncrementClockCycle(MemoryAccessMode mode);
+    
+    // Its not this simple!
+    void normallyIncrementClockCycle(MemoryAccessMode mode, u8 timeOffset = 0);
 
+    void printStack(u8 entries);
 
     void execLoop();
+    void pushByte(byte b);
+    u8 popByte();
+    u8 peekByte();
+
+    void pushWord(u16 word);
+    u16 popWord();
+    u16 peekWord();
+
+
     
     ProcessorStatus& P() { return mP; }
     u8& SP() { return mSP; }
@@ -99,28 +116,88 @@ private:
     u16 decode16Bits();
 
     u8 getOperand(MemoryAccessMode);
+    u16 getAddressOperand(MemoryAccessMode);
+    
+    void setOrClearStatusIf(bool cond, ProcessorStatus);
     // Addition instructions do not currently set a status flag afterward.
+    void BRK(MemoryAccessMode);
+    void RTS(MemoryAccessMode);
+    void RTI(MemoryAccessMode);
+    void PHA(MemoryAccessMode);
+    void PLP(MemoryAccessMode);
+    void CLV(MemoryAccessMode);
+    void CLC(MemoryAccessMode);
+    void CLD(MemoryAccessMode);
+
+    enum class ShiftType {
+	Rotate,
+	Arithmetic,
+    };
+    void leftShiftImpl(MemoryAccessMode, ShiftType);
+    void rightShiftImpl(MemoryAccessMode, ShiftType);
+    void LSR(MemoryAccessMode);
+    void ASL(MemoryAccessMode);
+    void ROR(MemoryAccessMode);
+    void ROL(MemoryAccessMode);
+
     void ORA(MemoryAccessMode);
     void AND(MemoryAccessMode);
     void ADC(MemoryAccessMode);
+    void ADCImpl(u8 operand);
+    void LDA(MemoryAccessMode);
     void EOR(MemoryAccessMode);
     void CMP(MemoryAccessMode);
+    void CPX(MemoryAccessMode);
+    void CPY(MemoryAccessMode);
     void SBC(MemoryAccessMode);
+    void STA(MemoryAccessMode);
+    void STX(MemoryAccessMode);
+    void STY(MemoryAccessMode);
+    void BIT(MemoryAccessMode);
 
     void DEC(MemoryAccessMode);
     void DEX(MemoryAccessMode);
+    void DEY(MemoryAccessMode);
     void INC(MemoryAccessMode);
+    void INX(MemoryAccessMode);
+    void INY(MemoryAccessMode);
     void JMP(MemoryAccessMode);
+    void LDX(MemoryAccessMode);
+    void LDY(MemoryAccessMode);
+    void JSR(MemoryAccessMode);
+    void NOP(MemoryAccessMode);
+    void SED(MemoryAccessMode);
+    void SEC(MemoryAccessMode);
+    void SEI(MemoryAccessMode);
+    void PHP(MemoryAccessMode);
+    void PLA(MemoryAccessMode);
+    void BCS(MemoryAccessMode);
+    void BCC(MemoryAccessMode);
+    void BEQ(MemoryAccessMode);
+    void BNE(MemoryAccessMode);
+    void BVS(MemoryAccessMode);
+    void BVC(MemoryAccessMode);
+    void BPL(MemoryAccessMode);
+    void BMI(MemoryAccessMode);
+
+    void TAY(MemoryAccessMode);
+    void TAX(MemoryAccessMode);
+    void TXA(MemoryAccessMode);
+    void TYA(MemoryAccessMode);
+    void TSX(MemoryAccessMode);
+    void TXS(MemoryAccessMode);
+
     
     /** These require memory access which we can't do right now
 	void STA(MemoryAccessMode);
-	void LDA(MemoryAccessMode);
 	
     */
     
     // DecodedInstruction decodeInstruction(EncodedInstructionType);
 
-    
+    void setProcessorStatus(ProcessorStatus);
+    void clearProcessorStatus(ProcessorStatus);
+    ALWAYS_INLINE bool processorStatusHas(ProcessorStatus status) { return (unsigned)mP & (unsigned)status; }
     ProcessorStatus mP;
     u8 mSP;
     u16 mPC;

@@ -5,6 +5,8 @@
 #include <QCommandLineParser>
 #include "nesemulator.h"
 
+#define MATT_CPU_TEST 0
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -24,10 +26,16 @@ int main(int argc, char *argv[])
     const QStringList args = parser.positionalArguments();
 
     NESEmulator::powerOn();
-    
-    auto& cpu = CPU::the();
-    cpu.execLoop();
 
+#if MATT_CPU_TEST
+    RomLoader loader;
+    auto& bus = NESEmulator::Bus::the();
+
+    bus.mattCPUTestLoadROM(loader.nesROM());
+    
+    auto& cpu = NESEmulator::CPU::the();
+    cpu.execLoop();
+#endif
     
     Window w;
     w.show();
