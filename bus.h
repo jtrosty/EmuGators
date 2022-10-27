@@ -47,7 +47,7 @@ class Bus : public Device<Bus>
     u16 ppuMirror = 		0x3FFF + 0x2000;
     u16 ppuIOStart = 		0x2000;
     u16 apuControlIOStart = 0x4000;
-    u16 cartridgeROM = 		0x0800;
+    u16 cartridgeROM = 		0x8000;
     u16 ppuRegisterStart =  0x2000;
     u16 ppuRegisterEnd =    0x3FFF;
 public:
@@ -59,11 +59,13 @@ public:
     
     u16 ramStart() const { return mRamStart; }
     
+    void mattCPUTestLoadROM(QByteArray rom);
     void loadROM(QByteArray rom);
 
     u8 readMemory(u16 addr);
     u16 readMemory16Bits(u16 addr);
     void writeMemory(u16 addr, u8 data);
+    void writeMemory16Bits(u16 addr, u16 data);
 
     /*
      *

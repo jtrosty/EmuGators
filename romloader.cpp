@@ -1,5 +1,6 @@
 #include "romloader.h"
 
+
 RomLoader::RomLoader() {
     QString path = ":/resources/roms/";
     QString nestest = "nestest.nes";
@@ -22,4 +23,9 @@ RomLoader::RomLoader() {
         donkeyKongRom = fileDonkey.readAll();
     }
     fileDonkey.close();
+}
+
+
+QByteArray RomLoader::debug_getDonkeyKongRom() {
+    return donkeyKongRom;
 }

@@ -3,8 +3,7 @@
 namespace NESEmulator {
 
     void PPU::initialize(u32* glPixelArray) {
-        pixelData = glPixelArray;
-    }
+        pixelData = glPixelArray; }
 
     PPU::~PPU() {
 
@@ -13,6 +12,19 @@ namespace NESEmulator {
 
     void PPU::ppuWriteRegister(u16 address, u8 data) {
         Bus::the().writeMemory(address, data);
+        // control register
+
+        // mask register
+
+
+       // status register
+
+
+        // scrooll register
+
+        // addr
+
+        // data
     }
 
     u8 PPU::ppuReadRegister(u16 address) {
@@ -145,13 +157,6 @@ namespace NESEmulator {
         Q_ASSERT(index < (128 * 128));
         debug_patternTable[patternTable][(y * 128) + x] = colorValue;
     }
-
-    void PPU::debug_loadRomDisplayVram() {
-        RomLoader debug_loadDonkeyKong;
-        debug_loadDonkeyKong.donkeyKongRom;
-    }
-
-
 
 }
 

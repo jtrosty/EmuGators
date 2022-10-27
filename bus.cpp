@@ -20,6 +20,25 @@ void Bus::loadROM(QByteArray rom) {
         memory[cartridgeROM + i] = rom.at(i);
     }
 }
+void Bus::mattCPUTestLoadROM(QByteArray rom) {
+    // Just for now this will assume nrom-128 (last 16kb of rom are a repeat of the first 16kb)
+    //bool hasTrainer = rom.at(6) & 0b1000;
+    // printf("has trainer: %u\n", hasTrainer);
+    unsigned cartridgeIndex = cartridgeROM;
+    for (int i = 16; i < kib(16) + 16; i++, cartridgeIndex++) {
+        if (cartridgeROM + i >= 0xFFFA) {
+            qInfo("Rom load violated address Rom space");
+        }
+        memory[cartridgeIndex] = rom.at(i);
+    }
+    printf("cartridge first load ends at %08x\n", cartridgeIndex);
+    for (int i = 16; i < kib(16) + 16; i++, cartridgeIndex++) {
+        if (cartridgeROM + i >= 0xFFFA) {
+            qInfo("Rom load violated address Rom space");
+        }
+        memory[cartridgeIndex] = rom.at(i);
+    }
+}
 
 u8 Bus::readMemory(u16 addr) {
         // Ram Mirroring
@@ -35,8 +54,13 @@ u8 Bus::readMemory(u16 addr) {
 
 u16 Bus::readMemory16Bits(u16 addr) {
     // lmao
-    u16 value = readMemory(addr) << 8;
-    return value |= readMemory(addr + 1);
+    u16 value = readMemory(addr);
+    return value | (readMemory(addr + 1) << 8);
+}
+
+void Bus::writeMemory16Bits(u16 addr, u16 data) {
+    writeMemory(addr, data & 0xff);
+    writeMemory(addr + 1, data >> 8);
 }
 
 

@@ -9,10 +9,15 @@
 
 class RomLoader
 {
-public:
     QByteArray nesTestRom;
     QByteArray donkeyKongRom;
     u8* donkeyKongBytes;
+public:
+    
+    QByteArray& nesROM() { return nesTestRom; }
+    QByteArray const& nesROM() const { return nesTestRom; }
+    QByteArray debug_getDonkeyKongRom();
+
     RomLoader();
 };
 

@@ -8,6 +8,8 @@
 #include <QDebug>
 #include "nesemulator.h"
 
+#define MATT_CPU_TEST 0
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -32,11 +34,9 @@ int main(int argc, char *argv[])
 
     auto& cpu = CPU::the();
     auto& ppu = PPU::the();
-    cpu.execLoop();
-    int testSize = romLoader->nesTestRom.size();
-    qInfo() << "The size of the rom is " << testSize << "\n";
+    //cpu.execLoop();
 
-    //int numOfPixels = 256 * 240;
+    // Setup Pixels for game
     int numOfPixels = 128 * 128;
     u32* pixels = new u32[numOfPixels];
     for (int i = 0; i < numOfPixels; i++) {
@@ -44,8 +44,19 @@ int main(int argc, char *argv[])
     }
     ppu.initialize(pixels);
 
+    ppu.debug_drawToScreen(romLoader->debug_getDonkeyKongRom());
+
+#if NO_MATT_CPU_TEST
+    RomLoader loader;
+    auto& bus = NESEmulator::Bus::the();
+
+    bus.mattCPUTestLoadROM(loader.nesROM());
+    
+    auto& cpu = NESEmulator::CPU::the();
+    cpu.execLoop();
+#endif
+    
     Window w(pixels);
-    ppu.debug_drawToScreen(romLoader->donkeyKongRom);
     w.show();
     return a.exec();
 }

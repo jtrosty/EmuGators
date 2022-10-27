@@ -59,6 +59,52 @@ private:
     u16 nameTableStart = 0x2000;
     u16 paletteMemStart = 0x3F00;
 
+    // PPU registers
+
+    union PPUCTRL {
+        struct {
+            // The colon then 1 indicates that each of these only require 1 bit
+            // The below is  bit table.
+            u8 scrollingNametableX : 1;
+            u8 scrollingNametableY : 1;
+            u8 VramAddressIncrement : 1;
+            u8 spritePatternTable : 1;
+            u8 backgroundPatternTable : 1;
+            u8 spriteSize : 1;
+            u8 NMI : 1;
+            u8 slave : 1;
+        };
+        u8 register;
+    } ppuControl;
+
+    union PPUMASK {
+        struct {
+            // The colon then 1 indicates that each of these only require 1 bit
+            // The below is  bit table.
+            u8 greyScale : 1;
+            u8 backgroundLeft : 1;
+            u8 backgroundRight : 1;
+            u8 renderBackground : 1;
+            u8 renderSprites : 1;
+            u8 emphasizeRed : 1;
+            u8 emphasizeGreen : 1;
+            u8 emphasizeBlue : 1;
+        };
+        u8 register;
+    } ppuMask;
+
+    union PPUSTATUS {
+        struct {
+            // The colon then 1 indicates that each of these only require 1 bit
+            // The below is  bit table.
+            u8 ppuOpenBus : 5;
+            u8 spriteOverflow : 1;
+            u8 spriteZeroHit : 1;
+            u8 verticalBlank : 1;
+        };
+        u8 register;
+    } ppuStatus;
+
 public:
     void initialize(u32* glPixelData);
     ~PPU();
