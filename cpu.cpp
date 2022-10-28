@@ -768,15 +768,23 @@ void CPU::PLP(MemoryAccessMode)
     mClockCycle += 2;
 }
 
+static u8 calculateBranchClockCycle(u16 fromAddress, u16 toAddress)
+{
+    u8 cycleInc = 1;
+    if ((toAddress & 0xff00) != (fromAddress & 0xff00))
+	cycleInc += 1;
+    return cycleInc;
+}
+
 void CPU::branchImpl(bool condition)
 {
     mClockCycle += 2;
-    if (condition) {
-	mPC += decode8Bits();
-
+    if (!condition) {
+	mPC++;
 	return;
     }
-    mPC++;
+    u8 relative = decode8Bits();
+    mClockCycle += calculateBranchClockCycle(mPC, mPC += relative);
 }
 
 void CPU::BCS(MemoryAccessMode)
