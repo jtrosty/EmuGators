@@ -196,107 +196,65 @@ void CPU::execLoop()
     }
 }
 
-void CPU::normallyIncrementClockCycle(MemoryAccessMode mode, u8 timeOffset)
+void CPU::normallyIncrementClockCycle(MemoryAccessMode mode, bool pageCrossed)
 {
     switch (mode) {
     case MemoryAccessMode::Immediate:
     case MemoryAccessMode::Accumulator:
-	mClockCycle += 2 + timeOffset;
+	mClockCycle += 2;
 	break;
     case MemoryAccessMode::ZeroPage:
-	mClockCycle += 3 + timeOffset;
+	mClockCycle += 3;
 	break;
     case MemoryAccessMode::Absolute:
     case MemoryAccessMode::XZeroPageIndexed:
     case MemoryAccessMode::YZeroPageIndexed:
-	mClockCycle += 4 + timeOffset;
+	mClockCycle += 4;
+	break;
+    case MemoryAccessMode::XAbsoluteIndexed:
+    case MemoryAccessMode::YAbsoluteIndexed:
+	mClockCycle += pageCrossed ? 5 : 4;
+	break;
+    case MemoryAccessMode::XIndirectIndexed:
+	mClockCycle += 6;
+    case MemoryAccessMode::YIndirectIndexed:
+	mClockCycle += pageCrossed ? 6 : 5;
 	break;
     default:
-	fprintf(stderr, "Cannot increment clock cycle, memory access mode unimplemented.\n");
-	exit(1);
+	assert(false);
     }
 }
 
 
-u8 CPU::getOperand(MemoryAccessMode mode)
+CPU::ValueOperandType CPU::getOperand(MemoryAccessMode mode)
 {
     auto& bus = Bus::the();
     switch (mode) {
     case MemoryAccessMode::Accumulator:
-       return mA;
+	return { mA };
     case MemoryAccessMode::Immediate: {
 	u8 val = bus.readMemory(mPC);
 	mPC++;
-	return val;
+	return { val };
     }
-    case MemoryAccessMode::ZeroPage: {
-	u8 val = bus.readMemory(bus.readMemory(mPC));
-	++mPC;
-	return val;
+    default: {
+	auto address = getAddressOperand(mode);
+	return ValueOperandType { address };
     }
-    case MemoryAccessMode::Absolute: {
-	u8 value = bus.readMemory(bus.readMemory16Bits(mPC));
-	//printf("Program counter before increment: %08x\n", mPC);
-	mPC += 2;
-	//printf("Program counter after increment: %08x\n", mPC);
-	return value;
-    }
-    case MemoryAccessMode::XAbsoluteIndexed: {
-	u8 value = bus.readMemory(bus.readMemory16Bits(mPC) + mX);
-	mPC += 2;
-	return value;
-    }
-    case MemoryAccessMode::YAbsoluteIndexed: {
-	u8 value = bus.readMemory(bus.readMemory16Bits(mPC) + mY);
-	mPC += 2;
-	return value;
-    }
-    case MemoryAccessMode::XZeroPageIndexed: {
-	u8 val = bus.readMemory((bus.readMemory(mPC) + mX) % 256);
-	mPC++;
-	return val;
-    }
-    case MemoryAccessMode::YZeroPageIndexed: {
-	u8 val = bus.readMemory((bus.readMemory(mPC) + mY) % 256);
-	mPC++;
-	return val;
-    }
-    case MemoryAccessMode::XIndirectIndexed: {
-	// Not normal, just leftovers from debugging a silly issue. Lazy me.
-	u16 arg = bus.readMemory(mPC);
-	u16 leftHalf = (u16)bus.readMemory((arg + mX) % 256);
-	u16 rightHalfBeforeRead = (arg + 1 + mX) % 256;
-	u16 rightHalf = (u16)bus.readMemory(rightHalfBeforeRead) * 256;
-	u16 address = leftHalf + rightHalf;
-
-	u8 val = bus.readMemory(address);
-	mPC += 1;
-	return val;
-    }
-    case MemoryAccessMode::YIndirectIndexed: {
-	u16 arg = bus.readMemory(mPC);
-	u16 address = bus.readMemory(arg) + bus.readMemory((arg + 1) % 256) * 256 + mY;
-	u8 val = bus.readMemory(address);
-	mPC += 1;
-	return val;
-    }
-    default:
-	fprintf(stderr, "Unimplemented memory access mode number: %u!\n", (unsigned)mode);
-	exit(1);
     }
 }
 
-u16 CPU::getAddressOperand(MemoryAccessMode mode)
+CPU::AddressOperandType CPU::getAddressOperand(MemoryAccessMode mode)
 {
     auto& bus = Bus::the();
     switch (mode) {
     case MemoryAccessMode::Accumulator:
-	return mA;
+	return { mA };
     case MemoryAccessMode::Immediate:
     case MemoryAccessMode::ZeroPage: {
-	 u16 val = bus.readMemory(mPC);
+	 u16 address = bus.readMemory(mPC);
 	 mPC++;
-	 return val;
+	 return address;
     }
     case MemoryAccessMode::Absolute: {
 	u16 address = bus.readMemory16Bits(mPC);
@@ -304,14 +262,16 @@ u16 CPU::getAddressOperand(MemoryAccessMode mode)
 	return address;
     }
     case MemoryAccessMode::XAbsoluteIndexed: {
-	u16 address = bus.readMemory16Bits(mPC) + mX;
+	u16 oldAddress = bus.readMemory16Bits(mPC);
+	u16 address = oldAddress + mX;
 	mPC += 2;
-	return address;
+	return { address, ((address & 0xff00) != (oldAddress & 0xff00)) };
     }
     case MemoryAccessMode::YAbsoluteIndexed: {
-	u16 address = bus.readMemory16Bits(mPC) + mY;
+	u16 oldAddress = bus.readMemory16Bits(mPC);
+	u16 address = oldAddress + mY;
 	mPC += 2;
-	return address;
+	return { address, ((address & 0xff00) != (oldAddress & 0xff00)) };
     }
     case MemoryAccessMode::XZeroPageIndexed: {
 	u16 addr = (bus.readMemory(mPC) + mX) % 256;
@@ -333,9 +293,10 @@ u16 CPU::getAddressOperand(MemoryAccessMode mode)
     }
     case MemoryAccessMode::YIndirectIndexed: {
 	u16 arg = bus.readMemory(mPC);
-	u16 address = bus.readMemory(arg) + bus.readMemory((arg + 1) % 256) * 256 + mY;
+	u16 oldAddress = bus.readMemory(arg) + bus.readMemory((arg + 1) % 256) * 256;
+	u16 address = oldAddress + mY;
 	mPC += 1;
-	return address;
+	return { address, ((address & 0xff00) != (oldAddress & 0xff00)) };
     }
 
     default:
@@ -383,30 +344,33 @@ void CPU::PHA(MemoryAccessMode)
 void CPU::ORA(MemoryAccessMode mode)
 {
     printf("ORA\n");
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     mA |= operand;
     setOrClearStatusIf(mA == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mA & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode, operand.pageCrossed);
 }
 
 void CPU::AND(MemoryAccessMode mode)
 {
     // just accumulator mode
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     printf("AND Operand: %08x, mA: %08x, ", operand, mA);
     mA &= operand;
     printf("Resulting mA: %08x\n", mA);
     setOrClearStatusIf(mA == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mA & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode, operand.pageCrossed);
 }
 
 void CPU::EOR(MemoryAccessMode mode)
 {
     // just accumulator mode
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     mA ^= operand;
     setOrClearStatusIf(mA == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mA & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode, operand.pageCrossed);
 }
 
 
@@ -486,15 +450,16 @@ void CPU::ROL(MemoryAccessMode mode)
 
 void CPU::ADC(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     ADCImpl(operand);
+    normallyIncrementClockCycle(mode, operand.pageCrossed);
 }
 
-void CPU::ADCImpl(u8 operand)
+void CPU::ADCImpl(ValueOperandType const& operand)
 {
     u8 oldValue = mA;
     bool didOverflow = false;
-    u8 newValue = oldValue + operand;
+    u8 newValue = oldValue + operand.value;
 
     if (newValue < oldValue)
 	didOverflow = true;
@@ -509,7 +474,7 @@ void CPU::ADCImpl(u8 operand)
     setOrClearStatusIf(didOverflow, ProcessorStatus::Carry);
 
     auto isSignOverflow = [&] () -> bool {
-        return (((oldValue & 0x80) == (operand & 0x80)) &&
+        return (((oldValue & 0x80) == (operand.value & 0x80)) &&
             ((oldValue & 0x80) != (newValue & 0x80)));
     };
     setOrClearStatusIf(isSignOverflow(), ProcessorStatus::Overflow);
@@ -519,7 +484,7 @@ void CPU::ADCImpl(u8 operand)
 
 void CPU::LDA(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     mA = operand;
     printf("This is what LDA got: %08x\n", mA);
     setOrClearStatusIf(mA == 0, ProcessorStatus::Zero);
@@ -530,7 +495,7 @@ void CPU::LDA(MemoryAccessMode mode)
 void CPU::CMP(MemoryAccessMode mode)
 {
     // just accumulator mode
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     printf("value of cmp operand: %08x, Accumulator: %08x\n", operand, mA);
     setOrClearStatusIf(mA >= operand, ProcessorStatus::Carry);
     setOrClearStatusIf(mA == operand, ProcessorStatus::Zero);
@@ -538,7 +503,7 @@ void CPU::CMP(MemoryAccessMode mode)
 }
 void CPU::CPX(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     printf("value of CPX operand: %u\n", operand);
     setOrClearStatusIf(mX >= operand, ProcessorStatus::Carry);
     setOrClearStatusIf(mX == operand, ProcessorStatus::Zero);
@@ -546,7 +511,7 @@ void CPU::CPX(MemoryAccessMode mode)
 }
 void CPU::CPY(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     printf("value of cpy operand: %08x, with mode number %u\n", operand, mode);
     setOrClearStatusIf(mY >= operand, ProcessorStatus::Carry);
     setOrClearStatusIf(mY == operand, ProcessorStatus::Zero);
@@ -555,8 +520,9 @@ void CPU::CPY(MemoryAccessMode mode)
 
 void CPU::SBC(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
-    ADCImpl(~operand);
+    ValueOperandType operand = getOperand(mode);
+    ValueOperandType inverseOperand { (u8)~operand.value, operand.pageCrossed };
+    ADCImpl(inverseOperand);
 }
 
 
@@ -691,7 +657,7 @@ void CPU::RTI(MemoryAccessMode)
 
 void CPU::LDX(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     mX = operand;
     printf("LDX turns mX into %08x\n", mX);
     setOrClearStatusIf(mX == 0, ProcessorStatus::Zero);
@@ -699,7 +665,7 @@ void CPU::LDX(MemoryAccessMode mode)
 }
 void CPU::LDY(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     mY = operand;
     setOrClearStatusIf(mY == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mY & 0b10000000, ProcessorStatus::Negative);
@@ -849,9 +815,9 @@ void CPU::STY(MemoryAccessMode mode)
 
 void CPU::BIT(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     printf("BIT Operand: %u, Accumulator: %u\n", operand, mA);
-    u8 result = mA & operand;
+    u8 result = mA & (u8)operand;
     printf("The result of the BIT operation is: %u\n", result);
     setOrClearStatusIf(!result, ProcessorStatus::Zero);
     setOrClearStatusIf(operand & 0b10000000, ProcessorStatus::Negative);
