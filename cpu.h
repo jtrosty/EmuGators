@@ -195,6 +195,7 @@ private:
     */
     
     // DecodedInstruction decodeInstruction(EncodedInstructionType);
+    void branchImpl(bool condition);
 
     void setProcessorStatus(ProcessorStatus);
     void clearProcessorStatus(ProcessorStatus);

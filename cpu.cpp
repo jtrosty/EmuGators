@@ -768,86 +768,52 @@ void CPU::PLP(MemoryAccessMode)
     mClockCycle += 2;
 }
 
-void CPU::BCS(MemoryAccessMode)
+void CPU::branchImpl(bool condition)
 {
-    if (processorStatusHas(ProcessorStatus::Carry)) {
+    mClockCycle += 2;
+    if (condition) {
 	mPC += decode8Bits();
+
 	return;
     }
     mPC++;
+}
+
+void CPU::BCS(MemoryAccessMode)
+{
+    branchImpl(processorStatusHas(ProcessorStatus::Carry));
 }
 
 void CPU::BCC(MemoryAccessMode)
 {
-    if (!processorStatusHas(ProcessorStatus::Carry)) {
-	mPC += decode8Bits();
-	return;
-    }
-    mPC++;
+    branchImpl(!processorStatusHas(ProcessorStatus::Carry));
 }
 
 void CPU::BEQ(MemoryAccessMode)
 {
-    if (processorStatusHas(ProcessorStatus::Zero)) {
-	mPC += decode8Bits();
-	return;
-    }
-    mPC++;
+    branchImpl(processorStatusHas(ProcessorStatus::Zero));
 }
 
 void CPU::BNE(MemoryAccessMode)
 {
-    if (!processorStatusHas(ProcessorStatus::Zero)) {
-	printf("BNE Branches!\n");
-	mPC += decode8Bits();
-	return;
-    }
-    mPC++;
+    branchImpl(!processorStatusHas(ProcessorStatus::Zero));
 }
 void CPU::BVS(MemoryAccessMode)
 {
-    mClockCycle += 2;
-    if (processorStatusHas(ProcessorStatus::Overflow)) {
-	printf("BVS Branches!\n");
-	mPC += decode8Bits();
-	mClockCycle += 1;
-	return;
-    }
-    mPC++;
+    branchImpl(processorStatusHas(ProcessorStatus::Overflow));
 }
 
 void CPU::BVC(MemoryAccessMode)
 {
-    mClockCycle += 2;
-    if (!processorStatusHas(ProcessorStatus::Overflow)) {
-	printf("BVC Branches!\n");
-	mPC += decode8Bits();
-	mClockCycle += 1;
-	return;
-    }
-    mPC++;
+    branchImpl(!processorStatusHas(ProcessorStatus::Overflow));
 }
 void CPU::BMI(MemoryAccessMode)
 {
-    mClockCycle += 2;
-    if (processorStatusHas(ProcessorStatus::Negative)) {
-	printf("BMI Branches!\n");
-	mPC += decode8Bits();
-	mClockCycle += 1;
-	return;
-    }
-    mPC++;
+    branchImpl(processorStatusHas(ProcessorStatus::Negative));
 }
 void CPU::BPL(MemoryAccessMode)
 {
-    mClockCycle += 2;
-    if (!processorStatusHas(ProcessorStatus::Negative)) {
-	printf("BPL Branches!\n");
-	mPC += decode8Bits();
-	mClockCycle += 1;
-	return;
-    }
-    mPC++;
+    branchImpl(!processorStatusHas(ProcessorStatus::Negative));
 }
 
 void CPU::STA(MemoryAccessMode mode)
