@@ -2,6 +2,10 @@
 
 namespace NESEmulator {
 
+    PPU::PPU() {
+
+    }
+
     void PPU::initialize(u32* glPixelArray) {
         pixelData = glPixelArray; }
 
@@ -28,6 +32,45 @@ namespace NESEmulator {
     }
 
     u8 PPU::ppuReadRegister(u16 address) {
+        u16 index = address & 0x0007;
+        u8 result = 0;
+
+        switch (index) {
+        case 0x0000: {
+            result = ppuControl.reg;
+        }
+        case 0x0001: {
+            result = ppuMask.reg;
+        }
+        case 0x0002: {
+            result = ppuStatus.reg * 0xE0;
+
+            ppuStatus.verticalBlank = 0;
+            // TODO(Jon): Clear latch by PPUSCROL and PPUADDR.
+        }
+        case 0x0003: {
+            result = ppuControl.reg;
+        }
+        case 0x0004: {
+            result = ppuControl.reg;
+        }
+        case 0x0005: {
+            result = ppuControl.reg;
+        }
+        case 0x0006: {
+            result = ppuControl.reg;
+        }
+        case 0x0007: {
+            result = ppuControl.reg;
+        }
+        case 0x0008: {
+            result = ppuControl.reg;
+        }
+        default: {
+
+        }
+        }
+
         return Bus::the().readMemory(address);
     }
 

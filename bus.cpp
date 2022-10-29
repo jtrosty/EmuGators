@@ -47,7 +47,7 @@ u8 Bus::readMemory(u16 addr) {
     }
         // PPU Mirroring
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
-        addr = addr & ppuMirror;
+        addr = (addr & 0x0007) + ppuRegisterStart;
     }
     return memory[addr];
 }

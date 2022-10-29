@@ -74,7 +74,7 @@ private:
             u8 NMI : 1;
             u8 slave : 1;
         };
-        u8 register;
+        u8 reg;
     } ppuControl;
 
     union PPUMASK {
@@ -90,7 +90,7 @@ private:
             u8 emphasizeGreen : 1;
             u8 emphasizeBlue : 1;
         };
-        u8 register;
+        u8 reg;
     } ppuMask;
 
     union PPUSTATUS {
@@ -102,11 +102,20 @@ private:
             u8 spriteZeroHit : 1;
             u8 verticalBlank : 1;
         };
-        u8 register;
+        u8 reg;
     } ppuStatus;
+
+    struct ObjectAttributeMemory {
+        u8 yPosition;
+        u8 indexNumber;
+        u8 attribute;
+        u8 xPosition;
+    } OAM[64];
+
 
 public:
     void initialize(u32* glPixelData);
+    PPU();
     ~PPU();
     void renderNameTable();
 
