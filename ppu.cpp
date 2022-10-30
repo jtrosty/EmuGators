@@ -38,33 +38,39 @@ namespace NESEmulator {
         switch (index) {
         case 0x0000: {
             result = ppuControl.reg;
+            break;
         }
         case 0x0001: {
             result = ppuMask.reg;
+            break;
         }
         case 0x0002: {
             result = ppuStatus.reg * 0xE0;
 
             ppuStatus.verticalBlank = 0;
             // TODO(Jon): Clear latch by PPUSCROL and PPUADDR.
+            break;
         }
         case 0x0003: {
-            result = ppuControl.reg;
+            // Does not get read
+            //OAM - Object Attribute Memory
+            break;
         }
         case 0x0004: {
-            result = ppuControl.reg;
+            //
+            break;
         }
         case 0x0005: {
             result = ppuControl.reg;
+            break;
         }
         case 0x0006: {
             result = ppuControl.reg;
+            break;
         }
         case 0x0007: {
             result = ppuControl.reg;
-        }
-        case 0x0008: {
-            result = ppuControl.reg;
+            break;
         }
         default: {
 
