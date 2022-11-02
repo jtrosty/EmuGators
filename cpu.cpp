@@ -19,7 +19,7 @@ void CPU::reset()
 
 void CPU::printStack(u8 entries)
 {
-#if DEBUG
+#if !DEBUG
     return;
 #endif
     printf("Stack Pointer: %08x\n", mSP + 0x100);
