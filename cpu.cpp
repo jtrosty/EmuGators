@@ -660,18 +660,10 @@ void CPU::RTS(MemoryAccessMode)
     mPC = popWord() + 1;
 #if 1
     if (u8 result = Bus::the().readMemory(0); result > 0) {
-	printf("!!!!! FAILED TEST location 00h, error code %08x !!!!!\n", result);
+	printf("\n!!!!! FAILED TEST, error code '%x' !!!!!\n", result);
 	exit(1);
     }
 #endif
-    if (u8 result = Bus::the().readMemory(2); result > 0) {
-	printf("!!!!! FAILED TEST location 02h, error code %08x !!!!!\n", result);
-	exit(1);
-    }
-    if (u8 result = Bus::the().readMemory(3); result > 0) {
-	printf("!!!!! FAILED TEST location 03h, error code %08x !!!!!\n", result);
-	exit(1);
-    }
 
 #if DEBUG
     printf("I happen and pop to %08x\n", mPC);
@@ -718,15 +710,9 @@ void CPU::NOP(MemoryAccessMode)
 {
     mClockCycle += 2;
     static unsigned testNumber = 0;
-    if (u8 result = Bus::the().readMemory(2); result != 0) {
-	printf("!!!!! FAILED TEST location 02h, error code %08x !!!!!\n", result);
-	exit(1);
-    }
-    if (u8 result = Bus::the().readMemory(3); result != 0) {
-	printf("!!!!! FAILED TEST location 03h, error code %08x !!!!!\n", result);
-	exit(1);
-    }
-    printf("%x, ", ++testNumber);
+    printf("%2x, ", ++testNumber);
+    if (testNumber % 16 == 0)
+	printf("\n");
 }
 
 void CPU::SEC(MemoryAccessMode)
