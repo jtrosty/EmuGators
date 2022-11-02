@@ -9,7 +9,7 @@ namespace NESEmulator {
 
 void CPU::reset()
 {
-    mP = (ProcessorStatus)0x34; // Why 0x34?
+    mP = (ProcessorStatus)0x34;
     mA = mX = mY = 0;
     mSP = 0xfd;
     mIsRunning = true;
