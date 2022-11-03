@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     NESEmulator::powerOn();
 
 #if MATT_CPU_TEST
+    printf("Starting NES Test Rom\nRunning official instruction tests...\n");
     RomLoader loader;
     auto& bus = NESEmulator::Bus::the();
 
