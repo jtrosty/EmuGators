@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QPushButton>
 
+#include "defs.h"
 #include "glwidget.h"
 #include "romloader.h"
 
@@ -15,7 +16,7 @@ class Window : public QWidget
     Q_OBJECT
 
 public:
-    Window();
+    Window(u32* _pixelData);
 
 protected:
 

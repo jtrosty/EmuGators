@@ -1,7 +1,11 @@
+#include "ppu.h"
 #include "window.h"
+#include "weather.h"
+#include "romloader.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QDebug>
 #include "nesemulator.h"
 
 #define MATT_CPU_TEST 0
@@ -13,7 +17,8 @@ int main(int argc, char *argv[])
     QApplication::setApplicationName("NES Emulator");
     QApplication::setApplicationVersion("!Pre-alpha, if that!");
     
-    QCommandLineParser parser;
+    QCommandLineParser parser
+;
     parser.setApplicationDescription("NES Emulator");
     parser.addHelpOption();
     parser.addVersionOption();
@@ -25,9 +30,23 @@ int main(int argc, char *argv[])
     const QStringList args = parser.positionalArguments();
 
     NESEmulator::powerOn();
+    RomLoader* romLoader = new RomLoader();
 
-#if MATT_CPU_TEST
-    printf("Starting NES Test Rom\nRunning official instruction tests...\n");
+    auto& cpu = CPU::the();
+    auto& ppu = PPU::the();
+    //cpu.execLoop();
+
+    // Setup Pixels for game
+    int numOfPixels = 128 * 128;
+    u32* pixels = new u32[numOfPixels];
+    for (int i = 0; i < numOfPixels; i++) {
+        pixels[i] = 0;
+    }
+    ppu.initialize(pixels);
+
+    ppu.debug_drawToScreen(romLoader->debug_getDonkeyKongRom());
+
+#if NO_MATT_CPU_TEST
     RomLoader loader;
     auto& bus = NESEmulator::Bus::the();
 
@@ -37,7 +56,7 @@ int main(int argc, char *argv[])
     cpu.execLoop();
 #endif
     
-    Window w;
+    Window w(pixels);
     w.show();
     return a.exec();
 }
