@@ -1,21 +1,27 @@
 #include "glwidget.h"
 
-GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
+GLWidget::GLWidget(QWidget* parent, u32* _pixelData) : QOpenGLWidget(parent) {
     //setGeometry(20,20, 256, 240);
     //setFixedSize(widthScaled, heightScaled);
     //setMinimumSize(width * scale, height * scale);
-    setMinimumSize(widthScaled, heightScaled);
+    //setMinimumSize(widthScaled, heightScaled);
+    setMinimumSize(1024, 1024);
     setAutoFillBackground(false);
     GLWidget::setEnabled(true);
     GLWidget::grabKeyboard();
 
-    pixelData = new uchar[pixelDataLength];
+    pixelData = _pixelData;
+
+    //_pixelData = new u32[pixelDataLength / 4];
+    /*
+    uchar* tempPixelData = (uchar*)&_pixelData;
     for (int i = 0; i < pixelDataLength; i += 4) {
-        pixelData[i] 	 = startB;
-        pixelData[i + 1] = startG++;
-        pixelData[i + 2] = startR--;
-        pixelData[i + 3] = startA;
+        tempPixelData[i] 	 = startB;
+        tempPixelData[i + 1] = startG++;
+        tempPixelData[i + 2] = startR--;
+        tempPixelData[i + 3] = startA;
     }
+    */
 }
 
 GLWidget::~GLWidget() {
@@ -56,9 +62,9 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
 }
 
 void GLWidget::debug_updatePixelData() {
-    for (int i = 0; i < pixelDataLength; i += 4) {
+    for (int i = 0; i < pixelDataLength/4; i++ ) {
         pixelData[i] 	 += inputX;
-        pixelData[i + 1] += inputY;
+        //pixelData[i + 1] += inputY;
     }
     inputX = 0;
     inputY = 0;
@@ -77,15 +83,14 @@ void GLWidget::paintGL() {
     //QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
     //f->glClear(GL_COLOR_BUFFER_BIT);
     //glClear(GL_COLOR_BUFFER_BIT);
-    debug_updatePixelData();
+    //debug_updatePixelData();
     QPainter p(this);
-    QImage img((const uchar *)(pixelData), width, height, bytesPerLine, QImage::Format_ARGB32);
+    //QImage img((const uchar *)(pixelData), width, height, bytesPerLine, QImage::Format_ARGB32);
+    QImage img((const uchar *)(pixelData), 128, 128, (128 * 4), QImage::Format_ARGB32);
 
-    weather->addWeatherEffect(&img);
+    //weather->addWeatherEffect(&img);
 
     p.drawImage(rect(), img);
-
-
 }
 
 void GLWidget::resizeGL(int w, int h) {

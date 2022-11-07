@@ -17,7 +17,7 @@ void Bus::loadROM(QByteArray rom) {
         if (mRamStart + i >= 0xFFFA) {
             qInfo("Rom load violated address Rom space");
         }
-        memory[mRamStart + i] = rom.at(i);
+        memory[cartridgeROM + i] = rom.at(i);
     }
 }
 void Bus::mattCPUTestLoadROM(QByteArray rom) {
@@ -47,7 +47,7 @@ u8 Bus::readMemory(u16 addr) {
     }
         // PPU Mirroring
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
-        addr = addr & ppuMirror;
+        addr = (addr & 0x0007) + ppuRegisterStart;
     }
     return memory[addr];
 }

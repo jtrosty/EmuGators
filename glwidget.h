@@ -1,7 +1,6 @@
  #ifndef GLWIDGET_H
 #define GLWIDGET_H
 
-#include "weather.h"
 #include <QWidget>
 #include <QOpenGLWidget>
 #include <QPainter>
@@ -9,13 +8,18 @@
 #include <QImage>
 #include <QPoint>
 #include <QKeyEvent>
+#include <QByteArray>
+
+#include "weather.h"
+#include "defs.h"
 
 class GLWidget : public QOpenGLWidget
 {
     Q_OBJECT
 public:
     // VARIABLES
-    uchar* pixelData;
+    //uchar* pixelData;
+    u32* pixelData;
     uchar startR = 0xFF;
     uchar startB = 0x00;
     uchar startG = 0x00;
@@ -34,7 +38,7 @@ public:
 
     WeatherManager* weather = nullptr;
 
-    GLWidget(QWidget* parent);
+    GLWidget(QWidget* parent, u32* _pixelData);
 
     ~GLWidget();
 
@@ -46,6 +50,7 @@ public:
 
     // Helper functions
     void debug_updatePixelData();
+    QByteArray getPixelData();
 
     // Protected virtual functions for OpenGL, we do not call these
     protected:
