@@ -388,6 +388,21 @@ void CPU::EOR(MemoryAccessMode mode)
     normallyIncrementClockCycle(mode, operand.pageCrossed);
 }
 
+static u8 incrementShiftClockCycle(CPU::MemoryAccessMode mode)
+{
+    switch (mode) {
+    case CPU::MemoryAccessMode::Accumulator:
+	return 2;
+    case CPU::MemoryAccessMode::ZeroPage:
+    case CPU::MemoryAccessMode::XZeroPageIndexed:
+	return 5;
+    case CPU::MemoryAccessMode::Absolute:
+    case CPU::MemoryAccessMode::XAbsoluteIndexed:
+	return 6;
+    default:
+	assert(false);
+    }
+}
 
 void CPU::leftShiftImpl(MemoryAccessMode mode, ShiftType type)
 {
@@ -413,6 +428,7 @@ void CPU::leftShiftImpl(MemoryAccessMode mode, ShiftType type)
 	mA = value;
     else
 	Bus::the().writeMemory(address, value);
+    mClockCycle += incrementShiftClockCycle(mode);
 }
 void CPU::rightShiftImpl(MemoryAccessMode mode, ShiftType type)
 {
@@ -437,6 +453,7 @@ void CPU::rightShiftImpl(MemoryAccessMode mode, ShiftType type)
 	mA = value;
     else
 	Bus::the().writeMemory(address, value);
+    mClockCycle += incrementShiftClockCycle(mode);
 }
 
 // These don't work right! And is it normal for accumulator mode to be like that in other memory things? (or some question like that)
@@ -506,7 +523,7 @@ void CPU::LDA(MemoryAccessMode mode)
 #endif
     setOrClearStatusIf(mA == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mA & 0b10000000, ProcessorStatus::Negative);
-    //normallyIncrementClockCycle(mode);
+    normallyIncrementClockCycle(mode);
 }
 
 void CPU::CMP(MemoryAccessMode mode)
@@ -518,6 +535,7 @@ void CPU::CMP(MemoryAccessMode mode)
     setOrClearStatusIf(mA >= operand, ProcessorStatus::Carry);
     setOrClearStatusIf(mA == operand, ProcessorStatus::Zero);
     setOrClearStatusIf((mA - operand) & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode);
 }
 void CPU::CPX(MemoryAccessMode mode)
 {
@@ -528,6 +546,7 @@ void CPU::CPX(MemoryAccessMode mode)
     setOrClearStatusIf(mX >= operand, ProcessorStatus::Carry);
     setOrClearStatusIf(mX == operand, ProcessorStatus::Zero);
     setOrClearStatusIf((mX - operand) & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode);
 }
 void CPU::CPY(MemoryAccessMode mode)
 {
@@ -538,6 +557,7 @@ void CPU::CPY(MemoryAccessMode mode)
     setOrClearStatusIf(mY >= operand, ProcessorStatus::Carry);
     setOrClearStatusIf(mY == operand, ProcessorStatus::Zero);
     setOrClearStatusIf((mY - operand) & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode);
 }
 
 void CPU::SBC(MemoryAccessMode mode)
@@ -548,6 +568,21 @@ void CPU::SBC(MemoryAccessMode mode)
 }
 
 
+static u8 getDecIncClockCycle(CPU::MemoryAccessMode mode)
+{
+    switch (mode) {
+    case CPU::MemoryAccessMode::ZeroPage:
+	return 5;
+    case CPU::MemoryAccessMode::XZeroPageIndexed:
+    case CPU::MemoryAccessMode::Absolute:
+	return 6;
+    case CPU::MemoryAccessMode::XAbsoluteIndexed:
+	return 7;
+    default:
+	assert(false);
+    }
+}
+
 void CPU::DEC(MemoryAccessMode mode)
 {
     u16 address = getAddressOperand(mode);
@@ -557,6 +592,7 @@ void CPU::DEC(MemoryAccessMode mode)
     bus.writeMemory(address, value);
     setOrClearStatusIf(value == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(value & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += getDecIncClockCycle(mode);
 }
 void CPU::INC(MemoryAccessMode mode)
 {
@@ -567,6 +603,7 @@ void CPU::INC(MemoryAccessMode mode)
     bus.writeMemory(address, value);
     setOrClearStatusIf(value == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(value & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += getDecIncClockCycle(mode);
 }
 
 void CPU::DEX(MemoryAccessMode)
@@ -664,7 +701,7 @@ void CPU::RTS(MemoryAccessMode)
 	exit(1);
     }
 #endif
-
+    mClockCycle += 6;
 #if DEBUG
     printf("I happen and pop to %08x\n", mPC);
 #endif
@@ -676,6 +713,7 @@ void CPU::RTI(MemoryAccessMode)
 #if DEBUG
     printf("RTI happens and I pop to %08x\n", mPC);
 #endif
+    mClockCycle += 6;
     //exit(1);
 }
 
@@ -688,6 +726,7 @@ void CPU::LDX(MemoryAccessMode mode)
 #endif
     setOrClearStatusIf(mX == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mX & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode);
 }
 void CPU::LDY(MemoryAccessMode mode)
 {
@@ -695,6 +734,7 @@ void CPU::LDY(MemoryAccessMode mode)
     mY = operand;
     setOrClearStatusIf(mY == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mY & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode);
 }
 
 void CPU::JSR(MemoryAccessMode)
@@ -823,7 +863,7 @@ void CPU::STA(MemoryAccessMode mode)
     printf("The address that STA got: %08x\n", addr);
 #endif
     Bus::the().writeMemory(addr, mA);
-    //normallyIncrementClockCycle(mode);
+    normallyIncrementClockCycle(mode, true);
 }
 void CPU::STX(MemoryAccessMode mode)
 {
@@ -832,13 +872,13 @@ void CPU::STX(MemoryAccessMode mode)
 #if DEBUG
     printf("STX stores value %08x at %08x\n", mX, addr);
 #endif
-    //normallyIncrementClockCycle(mode);
+    normallyIncrementClockCycle(mode, true);
 }
 void CPU::STY(MemoryAccessMode mode)
 {
     u16 addr = getAddressOperand(mode);
     Bus::the().writeMemory(addr, mY);
-    //normallyIncrementClockCycle(mode);
+    normallyIncrementClockCycle(mode, true);
 }
 
 
@@ -857,7 +897,7 @@ void CPU::BIT(MemoryAccessMode mode)
     setOrClearStatusIf(operand & 0b10000000, ProcessorStatus::Negative);
     setOrClearStatusIf(operand & 0b01000000, ProcessorStatus::Overflow);
 
-    //normallyIncrementClockCycle(mode);
+    normallyIncrementClockCycle(mode);
 }
 
 void CPU::TAY(MemoryAccessMode)
