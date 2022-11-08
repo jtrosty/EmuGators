@@ -219,9 +219,21 @@ namespace NESEmulator {
                     break;
                 // AT Byte
                 case 2:
-                    ppuReadVRAM(nameTableAttributeStart );
+                    // To get to the attribute, 12 bits total to get to the attribute
+                    // from NESDEV.org:
+                    // NN 1111 YYY XXX
+                    // || |||| ||| +++-- high 3 bits of coarse X (x/4)
+                    // || |||| +++------ high 3 bits of coarse Y (y/4)
+                    // || ++++---------- attribute offset (960 bytes)
+                    // ++--------------- nametable select
+                    ppuReadVRAM(nameTableAttributeStart |
+                                vram.nameTableY << 11 |
+                                vram.nameTableX << 10 |
+                                vram.coarseX >> 2 |
+                                (vram.coarseY >> 2) << 3);
                     break;
                 case 3:
+                    // Skip, it takes 2 cycles to perform the task above
                     break;
                 // Pattern Table LSB
                 case 4:
