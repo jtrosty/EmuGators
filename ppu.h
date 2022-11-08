@@ -1,6 +1,7 @@
 #ifndef PPU_H
 #define PPU_H
 
+#include <stdio.h>
 #include <QByteArray>
 
 #include "defs.h"
@@ -57,6 +58,7 @@ private:
     u16 patternTable0 = 0x0000;
     u16 patternTable1 = 0x1000;
     u16 nameTableStart = 0x2000;
+    u16 nameTableAttributeStart = 0x23C0;
     u16 paletteMemStart = 0x3F00;
 
     // PPU registers
@@ -105,6 +107,36 @@ private:
         u8 reg;
     } ppuStatus;
 
+    union LoopyReg {
+        struct {
+            u16 coarseX : 5;
+            u16 coarseY : 5;
+            u16 nameTableX : 1;
+            u16 nameTableY : 1;
+            u16 fineY : 3;
+            u16 unused : 1;
+        };
+        u16 reg;
+    };
+    u8 fineX = 0x00;
+    LoopyReg vram;
+    LoopyReg tempVram;
+
+    // TODO (Jon) remove unused variables
+    u8 ppuOAMAddr;
+    u8 ppuSCROLL; // maybe
+    u16 ppuADDR;
+    u8 ppuDATA; // Maybe not needed
+    u8 ppuAddressLatch;
+
+    u16 scanline = 0;
+    u16 cycle = 0;
+
+    // Background variables
+    u8 bgNametableValue = 0;
+    u8 bgTileAttribute = 0;
+
+
     struct ObjectAttributeMemory {
         u8 yPosition;
         u8 indexNumber;
@@ -114,10 +146,11 @@ private:
 
 
 public:
-    void initialize(u32* glPixelData);
     PPU();
     ~PPU();
     void renderNameTable();
+    void initialize(u32* glPixelData);
+    void executeLoop();
 
     void debug_load_vRam();
     void debug_drawPatternTable(int patternTable);
