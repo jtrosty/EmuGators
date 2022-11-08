@@ -31,7 +31,7 @@ void Bus::mattCPUTestLoadROM(QByteArray rom) {
         }
         memory[cartridgeIndex] = rom.at(i);
     }
-    printf("cartridge first load ends at %08x\n", cartridgeIndex);
+    //printf("cartridge first load ends at %08x\n", cartridgeIndex);
     for (int i = 16; i < kib(16) + 16; i++, cartridgeIndex++) {
         if (cartridgeROM + i >= 0xFFFA) {
             qInfo("Rom load violated address Rom space");
