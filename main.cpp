@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
     ppu.debug_drawToScreen(romLoader->debug_getDonkeyKongRom());
 
-#if NO_MATT_CPU_TEST
+#if MATT_CPU_TEST
     RomLoader loader;
     auto& bus = NESEmulator::Bus::the();
 

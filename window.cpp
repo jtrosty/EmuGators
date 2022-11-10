@@ -21,6 +21,7 @@ Window::Window(u32* _pixelData)
 
     QKeyEvent* event;
 
+    openGL->debug_updatePixelData();
     openGL->hasFocus();
     layout->addWidget(openGL, 0, 0);
     layout->addWidget(button, 0, 1);

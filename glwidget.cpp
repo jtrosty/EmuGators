@@ -13,8 +13,8 @@ GLWidget::GLWidget(QWidget* parent, u32* _pixelData) : QOpenGLWidget(parent) {
     pixelData = _pixelData;
 
     //_pixelData = new u32[pixelDataLength / 4];
-    /*
     uchar* tempPixelData = (uchar*)&_pixelData;
+    /*
     for (int i = 0; i < pixelDataLength; i += 4) {
         tempPixelData[i] 	 = startB;
         tempPixelData[i + 1] = startG++;
