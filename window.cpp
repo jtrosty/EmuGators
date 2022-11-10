@@ -1,4 +1,5 @@
 #include "window.h"
+#include "lights.h"
 #include "weather.h"
 #include "glwidget.h"
 
@@ -16,6 +17,10 @@ Window::Window()
     button->setText("Push Me!");
     QLabel *weatherLabel = new QLabel(this);
     QObject::connect(weather, &WeatherManager::updated, weatherLabel, &QLabel::setText);
+
+    LightManager *lights = new LightManager();
+    lights->setMode(1);
+
 
     QGridLayout* layout = new QGridLayout(this);
     RomLoader* romLoader = new RomLoader();
