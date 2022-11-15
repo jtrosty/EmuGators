@@ -8,7 +8,7 @@
 #include <QDebug>
 #include "nesemulator.h"
 
-#define MATT_TEST 1
+#define MATT_TEST 0
 
 int main(int argc, char *argv[])
 {
