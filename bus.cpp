@@ -49,6 +49,9 @@ u8 Bus::readMemory(u16 addr) {
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
         addr = (addr & 0x0007) + ppuRegisterStart;
     }
+    else if (addr >= ppuIOStart && addr < apuControlIOStart) {
+
+    }
     return memory[addr];
 }
 

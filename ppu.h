@@ -15,6 +15,7 @@ class PPU : public Device<PPU>
 private:
     // The color palette
     //https://lospec.com/palette-list/nintendo-entertainment-system
+    u16 const numOfColors = 55;
     const u32 colors[55] = {
         0xff000000, 0xfffcfcfc, 0xfff8f8f8, 0xffbcbcbc, 0xff7c7c7c, 0xffa4e4fc,
         0xff3cbcfc, 0xff0078f8, 0xff0000fc, 0xffb8b8f8, 0xff6888fc, 0xff0058f8,
@@ -54,12 +55,16 @@ private:
      * The last 4 are for foreground.
      */
 
+    u16 ramPPUStart = 0x2000;
+    u16 ramPPUEnd = 0x3FFF;
     u16 spriteStart = 0x0000;
     u16 patternTable0 = 0x0000;
     u16 patternTable1 = 0x1000;
     u16 nameTableStart = 0x2000;
     u16 nameTableAttributeStart = 0x23C0;
     u16 paletteMemStart = 0x3F00;
+    u16 pixelWidth = 256;
+    u16 pixelHeight = 240;
 
     // PPU registers
 
@@ -135,6 +140,8 @@ private:
     // Background variables
     u8 bgNametableValue = 0;
     u8 bgTileAttribute = 0;
+    u8 bgPatternLSB = 0;
+    u8 bgPatternMSB = 0;
 
 
     struct ObjectAttributeMemory {
@@ -164,6 +171,12 @@ private:
     void ppuWriteVRAM(u16 address, u8 data);
     u8 ppuReadVRAM(u16 address);
     u8 getPalette(u16 address);
+    void incrementX();
+    void incrementY();
+    void loopyTransferX();
+    void loopyTransferY();
+    void setPixel(int x, int y, u32 color);
+
     u32 debug_patternTable[2][128 * 128]; // Each pattern table is 128 pixel wide and tall.
     void debug_patternTableToPixels(int patternTable, int x, int y);
 
