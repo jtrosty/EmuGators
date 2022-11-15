@@ -4,3 +4,4 @@
 namespace NESEmulator {
 class CPU;
 }
+class GLWidget;
