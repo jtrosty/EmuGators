@@ -1,7 +1,7 @@
 #include "glwidget.h"
 #include "bus.h"
 
-#define MATT_KEY_DEBUG 1
+#define MATT_KEY_DEBUG 0
 
 
 GLWidget::GLWidget(QWidget* parent, u32* _pixelData) : QOpenGLWidget(parent) {
@@ -70,7 +70,7 @@ void GLWidget::keyPressImpl(QKeyEvent* event, u8 (*addOrRemoveKey)(int, u8))
     u8 oldController = controller;
     controller = addOrRemoveKey(key, controller);
     Bus::the().updateController({}, controller);
-    printf("The keys that are pressed: %02x\n", controller);
+    //printf("The keys that are pressed: %02x\n", controller);
     if (controller != oldController)
 	this->update();
     else
