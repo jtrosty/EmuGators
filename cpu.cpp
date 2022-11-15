@@ -191,20 +191,26 @@ void CPU::runOpcode(EncodedInstructionType inst)
     }
 }
 
-void CPU::execLoop()
+void CPU::step(u32 cycles)
 {
-    auto& bus = Bus::the();
-
-    while (mIsRunning) {
-	EncodedInstructionType opcode = bus.rawMemory()[mPC++];
+    for (u32 i = 0; i < cycles; i++) {
+	EncodedInstructionType opcode = Bus::the().rawMemory()[mPC++];
+#if DEBUG
 	if (opcode == 0x4) {
 	    printf("\nOfficial instruction testing complete\n");
 	    exit(0);
 	}
-#if DEBUG
 	printf("Program counter: %08x, Instruction: %08x\n", mPC - 1, opcode);
 #endif
 	runOpcode(opcode);
+
+    }
+}
+
+void CPU::execLoop()
+{
+    while (mIsRunning) {
+	step();
     }
 }
 
