@@ -56,6 +56,9 @@ public:
     ~Bus();
     void initialize();
     void reset() { } // dummy for now
+
+    ALWAYS_INLINE void updateController(Badge<GLWidget>, u8 controller) { *mController = controller; }
+    ALWAYS_INLINE u8 getController(Badge<GLWidget>) { return *mController; }
     
     u8* rawMemory() { return memory; }
     
@@ -77,4 +80,5 @@ public:
 };
 
 }
+using NESEmulator::Bus;
 #endif // BUS_H
