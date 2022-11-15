@@ -52,6 +52,11 @@ u8 Bus::readMemory(u16 addr) {
     else if (addr >= ppuIOStart && addr < apuControlIOStart) {
 
     }
+    else if (addr >= 0x4016 && addr <= 0x4017) {
+	u8 data = (mControllerCache[addr & 1] & 0x80) > 0;
+	mControllerCache[addr & 1] <<= 1;
+	return data;
+    }
     return memory[addr];
 }
 
@@ -74,6 +79,11 @@ void Bus::writeMemory(u16 addr, u8 data) {
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
         addr = addr & ppuMirror;
     }
+    else if (addr >= 0x4016 && addr <= 0x4017) {
+	mControllerCache[addr & 1] = mController[addr & 1];
+	return;
+    }
+
     memory[addr] = data;
 }
 

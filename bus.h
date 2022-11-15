@@ -50,6 +50,8 @@ class Bus : public Device<Bus>
     u16 cartridgeROM = 		0x8000;
     u16 ppuRegisterStart =  0x2000;
     u16 ppuRegisterEnd =    0x3FFF;
+    u8 mController[2] { 0 };
+    u8 mControllerCache[2] { 0 };
 public:
     ~Bus();
     void initialize();
