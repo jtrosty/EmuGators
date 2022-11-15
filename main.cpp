@@ -8,7 +8,7 @@
 #include <QDebug>
 #include "nesemulator.h"
 
-#define MATT_CPU_TEST 0
+#define MATT_TEST 1
 
 int main(int argc, char *argv[])
 {
@@ -46,13 +46,12 @@ int main(int argc, char *argv[])
 
     ppu.debug_drawToScreen(romLoader->debug_getDonkeyKongRom());
 
-#if MATT_CPU_TEST
+#if MATT_TEST
     RomLoader loader;
     auto& bus = NESEmulator::Bus::the();
 
     bus.mattCPUTestLoadROM(loader.nesROM());
     
-    auto& cpu = NESEmulator::CPU::the();
     cpu.execLoop();
 #endif
     
