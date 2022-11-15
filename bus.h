@@ -5,7 +5,6 @@
 #include "defs.h"
 #include "device.h"
 #include "forward.h"
-#include "ppu.h"
 #include <QByteArray>
 #include <QDebug>
 

@@ -157,18 +157,10 @@ namespace NESEmulator {
     }
 
     void PPU::ppuWriteVRAM(u16 address, u8 data) {
-        if (address >= ramPPUStart && address < ramPPUEnd) {
-            ppuWriteRegister(address, data);
-        }
-        else {
-            vRam[address] = data;
-        }
+        vRam[address] = data;
     }
 
     u8 PPU::ppuReadVRAM(u16 address) {
-        if (address >= ramPPUStart && address < ramPPUEnd) {
-            return ppuReadRegister(address);
-        }
         return vRam[address];
     }
 
@@ -321,11 +313,14 @@ namespace NESEmulator {
             // Now get the pallete that will be used
             u8 palleteLowBit = bgTileAttribute & mask;
             u8 palleteHighBit = bgTileAttribute & mask;
-            u32 pixelColor = colors[ppuReadVRAM(paletteMemStart + pixelColorValue)];
+            u8 palleteValue = (palleteLowBit & 0x01) + ((palleteHighBit & 0x01) << 1);
+
+            u32 pixelColor = colors[(ppuReadVRAM(paletteMemStart + pixelColorValue)) % numOfColors ];
 
 
             int x = 0;
             int y = 0;
+            setPixel(cycle, scanline, pixelColor);
 
             /*
                     patternLSB = ppuReadVRAM(patternTable * sprite0Start + offset + row + 0x0000);
@@ -340,6 +335,10 @@ namespace NESEmulator {
                         int y = (spriteY * 8 + row);
                         */
         }
+    }
+
+    void PPU::setPixel(int x, int y, u32 color) {
+        pixelData[(y * pixelWidth) + x] = color;
     }
 
     void PPU::incrementX() {

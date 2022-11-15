@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 
     auto& cpu = CPU::the();
     auto& ppu = PPU::the();
-    //cpu.execLoop();
+    cpu.execLoop();
 
     // Setup Pixels for game
     int numOfPixels = 128 * 128;
