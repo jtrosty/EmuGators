@@ -1,4 +1,8 @@
 #include "glwidget.h"
+#include "bus.h"
+
+#define MATT_KEY_DEBUG 1
+
 
 GLWidget::GLWidget(QWidget* parent, u32* _pixelData) : QOpenGLWidget(parent) {
     //setGeometry(20,20, 256, 240);
@@ -28,7 +32,65 @@ GLWidget::~GLWidget() {
     delete[] pixelData;
 }
 
+namespace Controller {
+static u8 addKey(int key, u8 controller)
+{
+    switch (key) {
+    case Qt::Key_X: return controller | 0x80;
+    case Qt::Key_Z: return controller | 0x40;
+    case Qt::Key_A: return controller | 0x20;
+    case Qt::Key_S: return controller | 0x10;
+    case Qt::Key_Up: return controller | 0x8;
+    case Qt::Key_Down: return controller | 0x4;
+    case Qt::Key_Left: return controller | 0x2;
+    case Qt::Key_Right: return controller | 0x1;
+    }
+    return controller;
+}
+static u8 removeKey(int key, u8 controller)
+{
+    switch (key) {
+    case Qt::Key_X: return controller & ~0x80;
+    case Qt::Key_Z: return controller & ~0x40;
+    case Qt::Key_A: return controller & ~0x20;
+    case Qt::Key_S: return controller & ~0x10;
+    case Qt::Key_Up: return controller & ~0x8;
+    case Qt::Key_Down: return controller & ~0x4;
+    case Qt::Key_Left: return controller & ~0x2;
+    case Qt::Key_Right: return controller & ~0x1;
+    }
+    return controller;
+}
+}
+
+void GLWidget::keyPressImpl(QKeyEvent* event, u8 (*addOrRemoveKey)(int, u8))
+{
+    int key = event->key();
+    u8 controller = Bus::the().getController({});
+    u8 oldController = controller;
+    controller = addOrRemoveKey(key, controller);
+    Bus::the().updateController({}, controller);
+    printf("The keys that are pressed: %02x\n", controller);
+    if (controller != oldController)
+	this->update();
+    else
+	event->ignore();
+}
+
+void GLWidget::debugKeyPressEvent(QKeyEvent* event)
+{
+    keyPressImpl(event, Controller::addKey);
+}
+void GLWidget::debugKeyReleaseEvent(QKeyEvent* event)
+{
+    keyPressImpl(event, Controller::removeKey);
+}
+
 void GLWidget::keyPressEvent(QKeyEvent *event) {
+#if MATT_KEY_DEBUG
+    debugKeyPressEvent(event);
+    return;
+#endif
     switch (event->key()) {
     case Qt::Key_W:
         inputY = 10;
@@ -59,6 +121,13 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
         event->ignore();
         break;
     }
+}
+
+void GLWidget::keyReleaseEvent(QKeyEvent* event)
+{
+#if MATT_KEY_DEBUG
+    debugKeyReleaseEvent(event);
+#endif
 }
 
 void GLWidget::debug_updatePixelData() {
