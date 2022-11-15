@@ -10,7 +10,6 @@ namespace NESEmulator {
         pixelData = glPixelArray; }
 
     PPU::~PPU() {
-
     }
 
 
@@ -20,6 +19,8 @@ namespace NESEmulator {
         switch (index) {
         case 0x0000: {
             ppuControl.reg = data;
+            tempVram.nameTableX = ppuControl.scrollingNametableX;
+            tempVram.nameTableY = ppuControl.scrollingNametableY;
             break;
         }
         case 0x0001: {
@@ -61,11 +62,7 @@ namespace NESEmulator {
         }
         case 0x0007: {
             // VRAM read/write data register
-            if (ppuADDR < 0x3F00) {
-
-            }
-            else if (ppuADDR >= 0x3F00) {
-            }
+            ppuWriteVRAM(vram.reg, data);
             // Increment the nametable addressw
 
             // Depends on if in horizontal mode or veritcal mode.  Logic not yet yet
@@ -160,10 +157,18 @@ namespace NESEmulator {
     }
 
     void PPU::ppuWriteVRAM(u16 address, u8 data) {
-        vRam[address] = data;
+        if (address >= ramPPUStart && address < ramPPUEnd) {
+            ppuWriteRegister(address, data);
+        }
+        else {
+            vRam[address] = data;
+        }
     }
 
     u8 PPU::ppuReadVRAM(u16 address) {
+        if (address >= ramPPUStart && address < ramPPUEnd) {
+            return ppuReadRegister(address);
+        }
         return vRam[address];
     }
 
@@ -206,7 +211,8 @@ namespace NESEmulator {
             }
             if (cycle >= 1 && cycle < 258) {
 
-                // during visible seciton every 8 cycles updatessome variable.
+                // during visible seciton every 8 cycles updatessome variable to be used on the next cycle.
+                // 1 cycle per pixel
                 // It takes 2 cycles to write a 16-bit word.
                 // other other case will be skipped.
                 switch (cycle % 8) {
@@ -226,36 +232,161 @@ namespace NESEmulator {
                     // || |||| +++------ high 3 bits of coarse Y (y/4)
                     // || ++++---------- attribute offset (960 bytes)
                     // ++--------------- nametable select
-                    ppuReadVRAM(nameTableAttributeStart |
-                                vram.nameTableY << 11 |
-                                vram.nameTableX << 10 |
-                                vram.coarseX >> 2 |
+                    bgTileAttribute = ppuReadVRAM(nameTableAttributeStart |
+                                vram.nameTableY << 11 					  |
+                                vram.nameTableX << 10   				  |
+                                vram.coarseX >> 2 						  |
                                 (vram.coarseY >> 2) << 3);
+                    // TODO (Jon): I think there is more here
+
                     break;
                 case 3:
                     // Skip, it takes 2 cycles to perform the task above
                     break;
                 // Pattern Table LSB
                 case 4:
+                    //
+                    // 0000 0000 0000 0000
+                    //   X---------------- Pattern table selector
+                    //      XXXX XXXX----- This is the nametable value,This byte selects 1 of 256 different patters on the table
+                    //           XXXX XXXX the fine control called fine_y
+                    bgPatternLSB = ppuReadVRAM((ppuControl.backgroundPatternTable << 12)
+                                               + ((u16)bgNametableValue << 4)
+                                               + (vram.fineY) + 0x0000);
+
                     break;
                 case 5:
+                    // Skip, it takes 2 cycles to perform the task above
                     break;
                 // Pattern Table MSB
                 case 6:
+                    bgPatternMSB = ppuReadVRAM((ppuControl.backgroundPatternTable << 12)
+                                               + ((u16)bgNametableValue << 4)
+                                               + (vram.fineY) + 0x0008);
                     break;
                 case 7:
+                    // Skip, it takes 2 cycles to perform the task above
+                    incrementX();
                     break;
+                }
+                if (cycle == 256) {
+                    // Got to next scanline
+                    incrementY();
+                }
+                if (cycle == 257) {
+                   //
+                    loopyTransferX();
+                }
+                if (cycle == 338 || cycle == 340) {
+                    // The case 1-8 repeats from above after 280, but no more pixels are displayed to
+                    // The screen, this below does nothign
+                    ppuReadVRAM(nameTableStart | vram.reg & 0x0FFF);
+                }
+                if (scanline == -1 && cycle >= 280) {
+                    // We have completed the row, in preperation for the next, perform
+                    // Loopy register y transform from tvram to vram.
+                    loopyTransferY();
                 }
             }
         }
         if ( scanline == 240) {
-
+            // Nothing happens, rendering is complete
         }
         if ( scanline >= 241 && scanline <= 260) {
             if (scanline == 241 && cycle ==1) {
+                // The frame is done.
                 ppuStatus.verticalBlank = 1;
+                // tell CPU tyhat rendering is complete
+                if (ppuControl.NMI) {
+                    // Set NMI in RAM to true
+                    bus->writeMemory(0xFFFA, 1);
+                }
             }
+        }
+        if (ppuMask.renderBackground) {
+            // Perform redner of background,
+            // Only 1 bit is needed that correlates with 0-7 based on wehre int eh cycle we are.
+            u8 mask = 0x80 >> fineX;
+            // Shift bits 1, 1 bit per pixel
+            bgPatternLSB <<= 1;
+            bgPatternMSB <<= 1;
 
+            u8 lowerBit = bgPatternLSB & mask;
+            u8 higherBit = bgPatternMSB & mask;
+            // Only need to knwo if the value is 1 or 0.
+            if (lowerBit > 0) lowerBit = 0x01;
+            if (higherBit > 0) higherBit = 0x01;
+            // this pixel value gives you 0-4 and sets the color in the pallete
+            u8 pixelColorValue = (lowerBit & 0x01) + ((higherBit & 0x01) << 1);
+            // Now get the pallete that will be used
+            u8 palleteLowBit = bgTileAttribute & mask;
+            u8 palleteHighBit = bgTileAttribute & mask;
+            u32 pixelColor = colors[ppuReadVRAM(paletteMemStart + pixelColorValue)];
+
+
+            int x = 0;
+            int y = 0;
+
+            /*
+                    patternLSB = ppuReadVRAM(patternTable * sprite0Start + offset + row + 0x0000);
+                    patternMSB = ppuReadVRAM(patternTable * sprite0Start + offset + row + 0x0008);
+
+                    for (u16 col = 0; col < pixelInTable; col++) {
+                        // Need to loop through each byute plane and generate the value for each pixel
+                        // The value determines the color from the palette table
+                        // ONly need 1 bit from each of the MSB an LSB
+                        u8 pixelColorValue = (patternLSB & 0x01) + ((patternMSB & 0x01 )<< 1 );
+                        int x = (spriteX * 8 + (7 - col));
+                        int y = (spriteY * 8 + row);
+                        */
+        }
+    }
+
+    void PPU::incrementX() {
+        // If rendering is activiated.
+        if (ppuMask.renderBackground || ppuMask.renderSprites) {
+            // If we get too the end
+            if (vram.coarseX == 31) {
+                // If we get to the end, go back to the begining of the
+                // NEXT nametable
+                vram.coarseX = 0;
+                vram.nameTableX = ~vram.nameTableX;
+            }
+            else {
+                vram.coarseX++;
+            }
+        }
+    }
+
+    void PPU::incrementY() {
+        // Icrement fineY
+        if (vram.fineY < 7) {
+            vram.fineY++;
+        }
+        else {
+            vram.fineY = 0; // Reset fine y then reset coarse. flip table if scrolling.
+            if (vram.coarseY == 31) {
+                vram.coarseY = 0;
+                vram.nameTableY = ~vram.nameTableY;
+            }
+            else {
+                vram.coarseY++;
+            }
+        }
+    }
+
+    void PPU::loopyTransferX() {
+        if (ppuMask.renderBackground || ppuMask.renderSprites) {
+            vram.nameTableX = tempVram.nameTableX;
+            vram.coarseX = tempVram.coarseX;
+        }
+    }
+
+    void PPU::loopyTransferY() {
+        if (ppuMask.renderBackground || ppuMask.renderSprites) {
+            vram.nameTableY = tempVram.nameTableY;
+            vram.coarseY = tempVram.coarseY;
+            vram.fineY = tempVram.fineY;
         }
     }
 
@@ -340,6 +471,4 @@ namespace NESEmulator {
         Q_ASSERT(index < (128 * 128));
         debug_patternTable[patternTable][(y * 128) + x] = colorValue;
     }
-
 }
-

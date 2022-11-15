@@ -54,6 +54,8 @@ private:
      * The last 4 are for foreground.
      */
 
+    u16 ramPPUStart = 0x2000;
+    u16 ramPPUEnd = 0x3FFF;
     u16 spriteStart = 0x0000;
     u16 patternTable0 = 0x0000;
     u16 patternTable1 = 0x1000;
@@ -135,6 +137,8 @@ private:
     // Background variables
     u8 bgNametableValue = 0;
     u8 bgTileAttribute = 0;
+    u8 bgPatternLSB = 0;
+    u8 bgPatternMSB = 0;
 
 
     struct ObjectAttributeMemory {
@@ -164,6 +168,11 @@ private:
     void ppuWriteVRAM(u16 address, u8 data);
     u8 ppuReadVRAM(u16 address);
     u8 getPalette(u16 address);
+    void incrementX();
+    void incrementY();
+    void loopyTransferX();
+    void loopyTransferY();
+
     u32 debug_patternTable[2][128 * 128]; // Each pattern table is 128 pixel wide and tall.
     void debug_patternTableToPixels(int patternTable, int x, int y);
 
