@@ -17,8 +17,7 @@ int main(int argc, char *argv[])
     QApplication::setApplicationName("NES Emulator");
     QApplication::setApplicationVersion("!Pre-alpha, if that!");
     
-    QCommandLineParser parser
-;
+    QCommandLineParser parser;
     parser.setApplicationDescription("NES Emulator");
     parser.addHelpOption();
     parser.addVersionOption();
