@@ -3,6 +3,7 @@
 #include "cpu.h"
 #include "nesemulator.h"
 
+#define TEST_ROM 0
 #define DEBUG 0
 
 namespace NESEmulator {
@@ -191,20 +192,27 @@ void CPU::runOpcode(EncodedInstructionType inst)
     }
 }
 
-void CPU::execLoop()
+void CPU::step(u32 cycles)
 {
-    auto& bus = Bus::the();
-
-    while (mIsRunning) {
-	EncodedInstructionType opcode = bus.rawMemory()[mPC++];
+    for (u32 i = 0; i < cycles; i++) {
+	EncodedInstructionType opcode = Bus::the().rawMemory()[mPC++];
+#if TEST_ROM
 	if (opcode == 0x4) {
 	    printf("\nOfficial instruction testing complete\n");
 	    exit(0);
 	}
+#endif
 #if DEBUG
 	printf("Program counter: %08x, Instruction: %08x\n", mPC - 1, opcode);
 #endif
 	runOpcode(opcode);
+    }
+}
+
+void CPU::execLoop()
+{
+    while (mIsRunning) {
+	step();
     }
 }
 
@@ -695,7 +703,7 @@ void CPU::RTS(MemoryAccessMode)
 #endif
     printStack(10);
     mPC = popWord() + 1;
-#if 1
+#if TEST_ROM
     if (u8 result = Bus::the().readMemory(0); result > 0) {
 	printf("\n!!!!! FAILED TEST, error code '%x' !!!!!\n", result);
 	exit(1);
@@ -749,10 +757,12 @@ void CPU::JSR(MemoryAccessMode)
 void CPU::NOP(MemoryAccessMode)
 {
     mClockCycle += 2;
+#if TEST_ROM
     static unsigned testNumber = 0;
     printf("%2x, ", ++testNumber);
     if (testNumber % 16 == 0)
 	printf("\n");
+#endif
 }
 
 void CPU::SEC(MemoryAccessMode)

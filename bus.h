@@ -50,10 +50,15 @@ class Bus : public Device<Bus>
     u16 cartridgeROM = 		0x8000;
     u16 ppuRegisterStart =  0x2000;
     u16 ppuRegisterEnd =    0x3FFF;
+    u8 mController[2] { 0 };
+    u8 mControllerCache[2] { 0 };
 public:
     ~Bus();
     void initialize();
     void reset() { } // dummy for now
+
+    ALWAYS_INLINE void updateController(Badge<GLWidget>, u8 controller) { *mController = controller; }
+    ALWAYS_INLINE u8 getController(Badge<GLWidget>) { return *mController; }
     
     u8* rawMemory() { return memory; }
     
@@ -75,4 +80,5 @@ public:
 };
 
 }
+using NESEmulator::Bus;
 #endif // BUS_H

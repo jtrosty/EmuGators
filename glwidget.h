@@ -43,6 +43,7 @@ public:
     ~GLWidget();
 
     void keyPressEvent(QKeyEvent* event) override;
+    void keyReleaseEvent(QKeyEvent* event) override;
 
     // Slots
 
@@ -57,6 +58,11 @@ public:
     void initializeGL() override;
     void paintGL() override;
     void resizeGL(int w, int h) override;
+private:
+    void keyPressImpl(QKeyEvent*, u8 (*addOrRemoveKey)(int, u8));
+    void debugKeyPressEvent(QKeyEvent* event);
+    void debugKeyReleaseEvent(QKeyEvent* event);
+
 };
 
 #endif // GLWIDGET_H

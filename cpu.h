@@ -82,11 +82,10 @@ public:
 	Negative = 1 << 7,
     };
     
-    // Its not this simple!
-
     void printStack(u8 entries);
 
     void execLoop();
+    void step(u32 = 1);
     void pushByte(byte b);
     u8 popByte();
     u8 peekByte();
