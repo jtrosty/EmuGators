@@ -167,6 +167,8 @@ public:
 
 private:
     void ppuWriteRegister(u16 address, u8 data);
+    void writeToBus(u16 address, u8 data);
+    u8 readFromBus(u16 address);
     u8 ppuReadRegister(u16 address);
     void ppuWriteVRAM(u16 address, u8 data);
     u8 ppuReadVRAM(u16 address);

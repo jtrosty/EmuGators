@@ -1,4 +1,5 @@
 #include "ppu.h"
+#include "bus.h"
 
 namespace NESEmulator {
 
@@ -82,6 +83,14 @@ namespace NESEmulator {
             printf("Accessed write ppu registers, but got default. Index value %i", index);
         }
         }
+    }
+
+    void PPU::writeToBus(u16 address, u8 data)	{
+        Bus::the().writeMemory(address, data);
+    }
+
+    u8 PPU::readFromBus(u16 address) {
+        return Bus::the().readMemory(address);
     }
 
     u8 PPU::ppuReadRegister(u16 address) {
