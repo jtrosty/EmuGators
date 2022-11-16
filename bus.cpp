@@ -1,4 +1,5 @@
 #include "bus.h"
+#include "ppu.h"
 
 namespace NESEmulator {
 
@@ -19,7 +20,17 @@ void Bus::loadROM(QByteArray rom) {
         }
         memory[cartridgeROM + i] = rom.at(i);
     }
+    u8 numOfRomBanks = rom.at(4);
+    u8 numOfVramBlocks = rom.at(5);
+    u8 is512Trainer = rom.at(6) & 0b00000010;
+    u16 chrRomStart = 16;
+    if (is512Trainer) {
+        chrRomStart += 512;
+    }
+    chrRomStart += (0x4000 * numOfRomBanks);
+    PPU::the().loadVram(rom, rom.at(5), chrRomStart);
 }
+
 void Bus::mattCPUTestLoadROM(QByteArray rom) {
     // Just for now this will assume nrom-128 (last 16kb of rom are a repeat of the first 16kb)
     //bool hasTrainer = rom.at(6) & 0b1000;
@@ -39,6 +50,7 @@ void Bus::mattCPUTestLoadROM(QByteArray rom) {
         memory[cartridgeIndex] = rom.at(i);
     }
 }
+
 
 u8 Bus::readMemory(u16 addr) {
         // Ram Mirroring

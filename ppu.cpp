@@ -178,6 +178,14 @@ namespace NESEmulator {
         return result;
     }
 
+    void PPU::loadVram(QByteArray rom, u8 num8kVram, u16 chrRomStart) {
+        u32 chrRomSize = num8kVram * 0x2000;
+        for (int i = 0; i < chrRomSize; i++) {
+            vRam[i] = rom[chrRomStart + i];
+        }
+
+    }
+
     void PPU::debug_drawToScreen(QByteArray donkeyKong) {
         int prgRomSize = 0x01 * 0x4000; // 16 kb time number of prg rom secions
         int chrRomSize = 0x01 * 0x2000; // 8 kb time number of prg rom secions

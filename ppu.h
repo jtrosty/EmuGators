@@ -158,6 +158,7 @@ public:
     void renderNameTable();
     void initialize(u32* glPixelData);
     void executeLoop();
+    void loadVram(QByteArray rom, u8 num8kVram, u16 chrRomStart);
 
     void debug_load_vRam();
     void debug_drawPatternTable(int patternTable);

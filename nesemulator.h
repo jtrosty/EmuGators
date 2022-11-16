@@ -7,6 +7,12 @@
 
 namespace NESEmulator {
 
-void powerOn();
+    u32 clockCycle = 0;
+    u16 addrNMI = 0xFFFA;
+
+    void powerOn();
+    void execLoop();
 
 };
+
+
