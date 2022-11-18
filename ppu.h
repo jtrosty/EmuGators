@@ -1,12 +1,12 @@
 #ifndef PPU_H
 #define PPU_H
+#pragma once
 
 #include <stdio.h>
 #include <QByteArray>
 
 #include "defs.h"
 #include "bus.h"
-#include "romloader.h"
 
 namespace NESEmulator {
 
@@ -29,7 +29,7 @@ private:
         0xff787878
     };
     u32* pixelData;
-    Bus* bus;
+    //NESEmulator::Bus* bus;
 
     u8 vRam[0x4000] {0};
     /*
@@ -158,6 +158,7 @@ public:
     void renderNameTable();
     void initialize(u32* glPixelData);
     void executeLoop();
+    void loadVram(QByteArray rom, u8 num8kVram, u16 chrRomStart);
 
     void debug_load_vRam();
     void debug_drawPatternTable(int patternTable);
@@ -167,6 +168,8 @@ public:
 
 private:
     void ppuWriteRegister(u16 address, u8 data);
+    void writeToBus(u16 address, u8 data);
+    u8 readFromBus(u16 address);
     u8 ppuReadRegister(u16 address);
     void ppuWriteVRAM(u16 address, u8 data);
     u8 ppuReadVRAM(u16 address);

@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cpu.h"
-#include "nesemulator.h"
 
 #define TEST_ROM 0
-#define DEBUG 0
+#define DEBUG 1
 
 namespace NESEmulator {
 
@@ -14,7 +13,7 @@ void CPU::reset()
     mA = mX = mY = 0;
     mSP = 0xfd;
     mIsRunning = true;
-    mPC = 0xc000; //Bus::the().ramStart();
+    mPC = Bus::the().readMemory16Bits(Bus::the().pcStartPoint());//Bus::the().ramStart();//0xc000;
     mClockCycle = 0;
 }
 

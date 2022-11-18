@@ -1,9 +1,10 @@
-#include "cpu.h"
 #include "nesemulator.h"
+#include "cpu.h"
+#include "ppu.h"
 
-void NESEmulator::powerOn()
+void NESEmulator::powerOn(RomLoader& romLoader)
 {
-    Bus::the().initialize();
-    CPU::the().reset();
+    NESEmulator::Bus::the().initialize(romLoader.debug_getDonkeyKongRom());
+    NESEmulator::CPU::the().reset();
 }
 

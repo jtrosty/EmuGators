@@ -1,16 +1,41 @@
 #include "bus.h"
+#include "ppu.h"
+#include "cpu.h"
+//#include "romloader.h"
 
 namespace NESEmulator {
 
-void Bus::initialize()
+void Bus::initialize(QByteArray romToLoad)
 {
     // Initialize memory to zero
+    romLoaded = romToLoad;
     memory = new u8[0xFFFF + 1] {0};
+    loadROM();
+
 }
 
 Bus::~Bus() {
     delete[] memory;
 }
+
+void Bus::execLoop() {
+
+    // The ppu runs a cycle every loop
+    PPU::the().executeLoop();
+
+    // The CPU runs slowers and only goes once very 3 PPU cycles.
+    if (clockCycle % 3 == 0) {
+        NESEmulator::CPU::the().step();
+    }
+
+    // NMI control
+    if (Bus::the().readMemory(addrNMI)) {
+        // TODO do stuff?? or is it already handled
+
+    }
+    clockCycle++;
+}
+
 
 void Bus::loadROM(QByteArray rom) {
     for (int i = 0; i < rom.size(); i++) {
@@ -19,7 +44,35 @@ void Bus::loadROM(QByteArray rom) {
         }
         memory[cartridgeROM + i] = rom.at(i);
     }
+    u8 numOfRomBanks = rom.at(4);
+    u8 numOfVramBlocks = rom.at(5);
+    u8 is512Trainer = rom.at(6) & 0b00000010;
+    u16 chrRomStart = 16;
+    if (is512Trainer) {
+        chrRomStart += 512;
+    }
+    chrRomStart += (0x4000 * numOfRomBanks);
+    PPU::the().loadVram(rom, rom.at(5), chrRomStart);
 }
+
+void Bus::loadROM() {
+    for (int i = 0; i < romLoaded.size(); i++) {
+        if (mRamStart + i >= 0xFFFA) {
+            qInfo("Rom load violated address Rom space");
+        }
+        memory[cartridgeROM + i] = romLoaded.at(i);
+    }
+    u8 numOfRomBanks = romLoaded.at(4);
+    u8 numOfVramBlocks = romLoaded.at(5);
+    u8 is512Trainer = romLoaded.at(6) & 0b00000010;
+    u16 chrRomStart = 16;
+    if (is512Trainer) {
+        chrRomStart += 512;
+    }
+    chrRomStart += (0x4000 * numOfRomBanks);
+    PPU::the().loadVram(romLoaded, numOfVramBlocks, chrRomStart);
+}
+
 void Bus::mattCPUTestLoadROM(QByteArray rom) {
     // Just for now this will assume nrom-128 (last 16kb of rom are a repeat of the first 16kb)
     //bool hasTrainer = rom.at(6) & 0b1000;
@@ -39,6 +92,7 @@ void Bus::mattCPUTestLoadROM(QByteArray rom) {
         memory[cartridgeIndex] = rom.at(i);
     }
 }
+
 
 u8 Bus::readMemory(u16 addr) {
         // Ram Mirroring
