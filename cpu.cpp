@@ -824,7 +824,7 @@ void CPU::branchImpl(bool condition)
 	mPC++;
 	return;
     }
-    u8 relative = decode8Bits();
+    char relative = decode8Bits();
     mClockCycle += calculateBranchClockCycle(mPC, mPC += relative);
 }
 
