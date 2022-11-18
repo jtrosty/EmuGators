@@ -1,12 +1,12 @@
 #ifndef PPU_H
 #define PPU_H
+#pragma once
 
 #include <stdio.h>
 #include <QByteArray>
 
 #include "defs.h"
 #include "bus.h"
-#include "romloader.h"
 
 namespace NESEmulator {
 
@@ -29,7 +29,7 @@ private:
         0xff787878
     };
     u32* pixelData;
-    Bus* bus;
+    //NESEmulator::Bus* bus;
 
     u8 vRam[0x4000] {0};
     /*

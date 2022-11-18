@@ -1,5 +1,4 @@
 #include "ppu.h"
-#include "bus.h"
 
 namespace NESEmulator {
 
@@ -308,14 +307,14 @@ namespace NESEmulator {
                 // tell CPU tyhat rendering is complete
                 if (ppuControl.NMI) {
                     // Set NMI in RAM to true
-                    bus->writeMemory(0xFFFA, 1);
+                    Bus::the().writeMemory(0xFFFA, 1);
                 }
             }
         }
         if (ppuMask.renderBackground) {
             // Perform redner of background,
             // Only 1 bit is needed that correlates with 0-7 based on wehre int eh cycle we are.
-            u8 mask = 0x80 >> fineX;
+            u8 mask = 0x80 >> fineX;https://docs.google.com/document/d/1o9N4FHd5cBQrIEk_3XJsgFpvgkrLlJYZ4u9N1GTJgcc/edit
             // Shift bits 1, 1 bit per pixel
             bgPatternLSB <<= 1;
             bgPatternMSB <<= 1;

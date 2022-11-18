@@ -1,17 +1,18 @@
 #pragma once
 
 #include "defs.h"
-#include "bus.h"
-#include "forward.h" 
+#include "romloader.h"
 #include "cpu.h"
+#include "ppu.h"
+
 
 namespace NESEmulator {
 
-    u32 clockCycle = 0;
-    u16 addrNMI = 0xFFFA;
+    // auto& bus = Bus::the();
+    // auto& cpu = CPU::the();
+    // auto& ppu = PPU::the();
 
-    void powerOn();
-    void execLoop();
+    void powerOn(RomLoader &romloader);
 
 };
 

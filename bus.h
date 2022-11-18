@@ -7,6 +7,7 @@
 #include "forward.h"
 #include <QByteArray>
 #include <QDebug>
+#include "romloader.h"
 
 namespace NESEmulator {
 
@@ -52,10 +53,15 @@ class Bus : public Device<Bus>
     u16 ppuRegisterEnd =    0x3FFF;
     u8 mController[2] { 0 };
     u8 mControllerCache[2] { 0 };
+    u16 pcStartAddress = 0xFFFC;
+
+    u32 clockCycle = 0;
+    u16 addrNMI = 0xFFFA;
 public:
     ~Bus();
-    void initialize();
+    void initialize(QByteArray romToLoad);
     void reset() { } // dummy for now
+    void execLoop();
 
     ALWAYS_INLINE void updateController(Badge<GLWidget>, u8 controller) { *mController = controller; }
     ALWAYS_INLINE u8 getController(Badge<GLWidget>) { return *mController; }
@@ -63,8 +69,11 @@ public:
     u8* rawMemory() { return memory; }
     
     u16 ramStart() const { return mRamStart; }
+    u16 pcStartPoint() const { return pcStartAddress; }
+    QByteArray romLoaded;
     
     void mattCPUTestLoadROM(QByteArray rom);
+    void loadROM();
     void loadROM(QByteArray rom);
 
     u8 readMemory(u16 addr);
