@@ -10,7 +10,7 @@ void Bus::initialize(QByteArray romToLoad)
     // Initialize memory to zero
     romLoaded = romToLoad;
     memory = new u8[0xFFFF + 1] {0};
-    loadROM();
+    mattCPUTestLoadROM(romToLoad);
 
 }
 
