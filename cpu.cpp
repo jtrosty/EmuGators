@@ -323,6 +323,15 @@ CPU::AddressOperandType CPU::getAddressOperand(MemoryAccessMode mode)
     return mA;
 }
 
+void CPU::NMI()
+{
+    pushWord(mPC);
+    pushByte((u8)mP | 0x30);
+    mClockCycle += 7;
+
+    mPC = Bus::the().readMemory16Bits(0xfffa);
+}
+
 
 u8 CPU::decode8Bits()
 {
@@ -715,7 +724,7 @@ void CPU::RTS(MemoryAccessMode)
 }
 void CPU::RTI(MemoryAccessMode)
 {
-    mP = (ProcessorStatus)popByte();
+    mP = (ProcessorStatus)((popByte() & 0xef) | ((u8)mP & 0x10) | 0x20);
     mPC = popWord();
 #if DEBUG
     printf("RTI happens and I pop to %08x\n", mPC);
@@ -782,7 +791,7 @@ void CPU::SED(MemoryAccessMode)
 
 void CPU::PHP(MemoryAccessMode)
 {
-    pushByte((u8)mP);
+    pushByte((u8)mP | 0x30);
 #if DEBUG
     printf("Status being pushed: %u\n", mP);
 #endif
@@ -801,7 +810,7 @@ void CPU::PLA(MemoryAccessMode)
 }
 void CPU::PLP(MemoryAccessMode)
 {
-    mP = (ProcessorStatus)popByte();
+    mP = (ProcessorStatus)((popByte() & 0xef) | ((u8)mP & 0x10) | 0x20);
 #if DEBUG
     printf("Status being popped: %08x\n", mA);
 #endif

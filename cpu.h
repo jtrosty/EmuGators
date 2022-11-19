@@ -126,7 +126,8 @@ public:
     };
     void normallyIncrementClockCycle(MemoryAccessMode mode, bool pageCrossed = false);
 
-    
+    bool nmiPending() const { return mNMIPending; }
+    void NMI();
     ProcessorStatus& P() { return mP; }
     u8& SP() { return mSP; }
     u16& PC() { return mPC; }
@@ -236,6 +237,7 @@ private:
     u8 mA;
     u8 mX;
     u8 mY;
+    bool mNMIPending { false };
 
     bool mIsRunning;
     
