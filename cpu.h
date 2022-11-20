@@ -82,12 +82,10 @@ public:
 	Negative = 1 << 7,
     };
     
-    // Its not this simple!
-    void normallyIncrementClockCycle(MemoryAccessMode mode, u8 timeOffset = 0);
-
     void printStack(u8 entries);
 
     void execLoop();
+    void step(u32 = 1);
     void pushByte(byte b);
     u8 popByte();
     u8 peekByte();
@@ -96,6 +94,37 @@ public:
     u16 popWord();
     u16 peekWord();
 
+    enum class PageCrossed : bool {
+	No = false,
+	Yes = true,
+    };
+    struct AddressOperandType {
+	AddressOperandType(u16 _address, bool _pageCrossed = false)
+	    : address(_address)
+	    , pageCrossed(_pageCrossed)
+	{
+	}
+	operator u16() { return address; }
+	u16 address;
+	bool pageCrossed;
+    };
+
+    struct ValueOperandType {
+	ValueOperandType(u8 _value, bool _pageCrossed = false)
+	    : value(_value)
+	    , pageCrossed(_pageCrossed)
+	{
+	}
+	ValueOperandType(AddressOperandType address)
+	    : value(Bus::the().readMemory(address.address))
+	    , pageCrossed(address.pageCrossed)
+	{
+	}
+	operator u8() { return value; }
+	u8 value;
+	bool pageCrossed;
+    };
+    void normallyIncrementClockCycle(MemoryAccessMode mode, bool pageCrossed = false);
 
     
     ProcessorStatus& P() { return mP; }
@@ -115,8 +144,8 @@ private:
     u8 decode8Bits();
     u16 decode16Bits();
 
-    u8 getOperand(MemoryAccessMode);
-    u16 getAddressOperand(MemoryAccessMode);
+    ValueOperandType getOperand(MemoryAccessMode);
+    AddressOperandType getAddressOperand(MemoryAccessMode);
     
     void setOrClearStatusIf(bool cond, ProcessorStatus);
     // Addition instructions do not currently set a status flag afterward.
@@ -128,6 +157,7 @@ private:
     void CLV(MemoryAccessMode);
     void CLC(MemoryAccessMode);
     void CLD(MemoryAccessMode);
+    void CLI(MemoryAccessMode);
 
     enum class ShiftType {
 	Rotate,
@@ -143,7 +173,7 @@ private:
     void ORA(MemoryAccessMode);
     void AND(MemoryAccessMode);
     void ADC(MemoryAccessMode);
-    void ADCImpl(u8 operand);
+    void ADCImpl(ValueOperandType const& operand);
     void LDA(MemoryAccessMode);
     void EOR(MemoryAccessMode);
     void CMP(MemoryAccessMode);
@@ -194,6 +224,8 @@ private:
     */
     
     // DecodedInstruction decodeInstruction(EncodedInstructionType);
+    void branchImpl(bool condition);
+    
 
     void setProcessorStatus(ProcessorStatus);
     void clearProcessorStatus(ProcessorStatus);

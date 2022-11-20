@@ -7,6 +7,7 @@
 #include "forward.h"
 #include <QByteArray>
 #include <QDebug>
+#include "romloader.h"
 
 namespace NESEmulator {
 
@@ -42,24 +43,37 @@ class Bus : public Device<Bus>
      */
 
     u8* memory; // Size 0xFFFF
-    u16 mRamStart = 			0x0000;
+    u16 mRamStart = 		0x0000;
     u16 ramMirror = 		0x1FFF;
     u16 ppuMirror = 		0x3FFF + 0x2000;
     u16 ppuIOStart = 		0x2000;
     u16 apuControlIOStart = 0x4000;
-    u16 cartridgeROM = 		0x08000;
+    u16 cartridgeROM = 		0x8000;
     u16 ppuRegisterStart =  0x2000;
     u16 ppuRegisterEnd =    0x3FFF;
+    u8 mController[2] { 0 };
+    u8 mControllerCache[2] { 0 };
+    u16 pcStartAddress = 0xFFFC;
+
+    u32 clockCycle = 0;
+    u16 addrNMI = 0xFFFA;
 public:
     ~Bus();
-    void initialize();
+    void initialize(QByteArray romToLoad);
     void reset() { } // dummy for now
+    void execLoop();
+
+    ALWAYS_INLINE void updateController(Badge<GLWidget>, u8 controller) { *mController = controller; }
+    ALWAYS_INLINE u8 getController(Badge<GLWidget>) { return *mController; }
     
     u8* rawMemory() { return memory; }
     
     u16 ramStart() const { return mRamStart; }
+    u16 pcStartPoint() const { return pcStartAddress; }
+    QByteArray romLoaded;
     
     void mattCPUTestLoadROM(QByteArray rom);
+    void loadROM();
     void loadROM(QByteArray rom);
 
     u8 readMemory(u16 addr);
@@ -75,4 +89,5 @@ public:
 };
 
 }
+using NESEmulator::Bus;
 #endif // BUS_H

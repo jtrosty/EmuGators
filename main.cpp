@@ -1,11 +1,14 @@
 #include "window.h"
 #include "weather.h"
+#include "romloader.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QDebug>
+#include <QTime>
 #include "nesemulator.h"
 
-#define MATT_CPU_TEST 0
+#define MATT_TEST 0
 
 int main(int argc, char *argv[])
 {
@@ -24,20 +27,46 @@ int main(int argc, char *argv[])
     parser.process(a);
     
     const QStringList args = parser.positionalArguments();
+    RomLoader* romLoader = new RomLoader();
 
-    NESEmulator::powerOn();
+    auto& bus = NESEmulator::Bus::the();
+    auto& cpu = NESEmulator::CPU::the();
+    auto& ppu = NESEmulator::PPU::the();
 
-#if MATT_CPU_TEST
+    NESEmulator::powerOn(*romLoader);
+    // TODO (Jon): Delete?
+
+
+    // Setup Pixels for game
+    int numOfPixels = 128 * 128;
+    u32* pixels = new u32[numOfPixels];
+    for (int i = 0; i < numOfPixels; i++) {
+        pixels[i] = 0;
+    }
+    ppu.initialize(pixels);
+
+    //ppu.debug_drawToScreen(romLoader->debug_getDonkeyKongRom());
+
+#if MATT_TEST
     RomLoader loader;
     auto& bus = NESEmulator::Bus::the();
 
     bus.mattCPUTestLoadROM(loader.nesROM());
     
-    auto& cpu = NESEmulator::CPU::the();
     cpu.execLoop();
 #endif
+
+    bus.execLoop();
+    bool running = true;
+    Window w(pixels);
+
+    while(running) {
+        a.processEvents();
+        bus.execLoop();
+        w.show();
+    }
+    a.exit();
     
-    Window w;
-    w.show();
-    return a.exec();
+    return 0;
+    //return a.exec();
 }

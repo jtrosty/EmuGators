@@ -1,22 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cpu.h"
-#include "nesemulator.h"
+
+#define TEST_ROM 0
+#define DEBUG 1
 
 namespace NESEmulator {
 
 void CPU::reset()
 {
-    mP = (ProcessorStatus)0x34; // Why 0x34?
+    mP = (ProcessorStatus)0x34;
     mA = mX = mY = 0;
     mSP = 0xfd;
     mIsRunning = true;
-    mPC = 0xc000; //Bus::the().ramStart();
+    mPC = Bus::the().readMemory16Bits(Bus::the().pcStartPoint());//Bus::the().ramStart();//0xc000;
     mClockCycle = 0;
 }
 
 void CPU::printStack(u8 entries)
 {
+#if !DEBUG
+    return;
+#endif
     printf("Stack Pointer: %08x\n", mSP + 0x100);
     printf("Stack output:\n");
     for (u8 i = 0; i < entries; i++) {
@@ -43,13 +48,17 @@ void CPU::setOrClearStatusIf(bool cond, ProcessorStatus status)
 
 void CPU::pushByte(byte b)
 {
+#if DEBUG
     fprintf(stderr, "Stack pointer before 1 byte push: %08x\n", mSP);
+#endif
     Bus::the().writeMemory((u16)mSP + 0x100, b);
     mSP--;
 }
 u8 CPU::popByte()
 {
+#if DEBUG
     fprintf(stderr, "Stack pointer before 1 byte pop: %08x\n", mSP);
+#endif
     return Bus::the().readMemory((u16)(++mSP) + 0x100);
 }
 u8 CPU::peekByte()
@@ -59,7 +68,9 @@ u8 CPU::peekByte()
 
 void CPU::pushWord(u16 word)
 {
+#if DEBUG
     fprintf(stderr, "Stack pointer before 2 byte push: %08x\n", mSP);
+#endif
     pushByte(word >> 8);
     pushByte(word & 0xff);
 }
@@ -84,6 +95,7 @@ void CPU::runOpcode(EncodedInstructionType inst)
 	IS_OPCODE(CLV, 0xb8, Implicit);
 	IS_OPCODE(CLC, 0x18, Implicit);
 	IS_OPCODE(CLD, 0xd8, Implicit);
+	IS_OPCODE(CLI, 0x58, Implicit);
 	IS_OPCODE(RTS, 0x60, Implicit);
 	IS_OPCODE(RTI, 0x40, Implicit);
 	IS_OPCODE(LDY, 0xa0, Immediate);
@@ -176,126 +188,92 @@ void CPU::runOpcode(EncodedInstructionType inst)
 	
     default:
 	UNDEFINED_INSTRUCTION(inst);
-	    
+    }
+}
+
+void CPU::step(u32 cycles)
+{
+    for (u32 i = 0; i < cycles; i++) {
+	EncodedInstructionType opcode = Bus::the().rawMemory()[mPC++];
+#if TEST_ROM
+	if (opcode == 0x4) {
+	    printf("\nOfficial instruction testing complete\n");
+	    exit(0);
+	}
+#endif
+#if DEBUG
+	printf("Program counter: %08x, Instruction: %08x\n", mPC - 1, opcode);
+#endif
+	runOpcode(opcode);
     }
 }
 
 void CPU::execLoop()
 {
-    auto& bus = Bus::the();
-
     while (mIsRunning) {
-	EncodedInstructionType opcode = bus.rawMemory()[mPC++];
-	printf("Program counter: %08x, Instruction: %08x\n", mPC - 1, opcode);
-	runOpcode(opcode);
-	if (u8 result = Bus::the().readMemory(2); result > 0) {
-	    printf("Error code: %08x\n", result);
-	    exit(1);
-	}
+	step();
     }
 }
 
-void CPU::normallyIncrementClockCycle(MemoryAccessMode mode, u8 timeOffset)
+void CPU::normallyIncrementClockCycle(MemoryAccessMode mode, bool pageCrossed)
 {
     switch (mode) {
     case MemoryAccessMode::Immediate:
     case MemoryAccessMode::Accumulator:
-	mClockCycle += 2 + timeOffset;
+	mClockCycle += 2;
 	break;
     case MemoryAccessMode::ZeroPage:
-	mClockCycle += 3 + timeOffset;
+	mClockCycle += 3;
 	break;
     case MemoryAccessMode::Absolute:
     case MemoryAccessMode::XZeroPageIndexed:
     case MemoryAccessMode::YZeroPageIndexed:
-	mClockCycle += 4 + timeOffset;
+	mClockCycle += 4;
+	break;
+    case MemoryAccessMode::XAbsoluteIndexed:
+    case MemoryAccessMode::YAbsoluteIndexed:
+	mClockCycle += pageCrossed ? 5 : 4;
+	break;
+    case MemoryAccessMode::XIndirectIndexed:
+	mClockCycle += 6;
+    case MemoryAccessMode::YIndirectIndexed:
+	mClockCycle += pageCrossed ? 6 : 5;
 	break;
     default:
-	fprintf(stderr, "Cannot increment clock cycle, memory access mode unimplemented.\n");
-	exit(1);
+	assert(false);
     }
 }
 
 
-u8 CPU::getOperand(MemoryAccessMode mode)
+CPU::ValueOperandType CPU::getOperand(MemoryAccessMode mode)
 {
     auto& bus = Bus::the();
     switch (mode) {
     case MemoryAccessMode::Accumulator:
-       return mA;
+	return { mA };
     case MemoryAccessMode::Immediate: {
 	u8 val = bus.readMemory(mPC);
 	mPC++;
-	return val;
+	return { val };
     }
-    case MemoryAccessMode::ZeroPage: {
-	u8 val = bus.readMemory(bus.readMemory(mPC));
-	++mPC;
-	return val;
+    default: {
+	auto address = getAddressOperand(mode);
+	return ValueOperandType { address };
     }
-    case MemoryAccessMode::Absolute: {
-	u8 value = bus.readMemory(bus.readMemory16Bits(mPC));
-	//printf("Program counter before increment: %08x\n", mPC);
-	mPC += 2;
-	//printf("Program counter after increment: %08x\n", mPC);
-	return value;
-    }
-    case MemoryAccessMode::XAbsoluteIndexed: {
-	u8 value = bus.readMemory(bus.readMemory16Bits(mPC) + mX);
-	mPC += 2;
-	return value;
-    }
-    case MemoryAccessMode::YAbsoluteIndexed: {
-	u8 value = bus.readMemory(bus.readMemory16Bits(mPC) + mY);
-	mPC += 2;
-	return value;
-    }
-    case MemoryAccessMode::XZeroPageIndexed: {
-	u8 val = bus.readMemory((bus.readMemory(mPC) + mX) % 256);
-	mPC++;
-	return val;
-    }
-    case MemoryAccessMode::YZeroPageIndexed: {
-	u8 val = bus.readMemory((bus.readMemory(mPC) + mY) % 256);
-	mPC++;
-	return val;
-    }
-    case MemoryAccessMode::XIndirectIndexed: {
-	// Not normal, just leftovers from debugging a silly issue. Lazy me.
-	u16 arg = bus.readMemory(mPC);
-	u16 leftHalf = (u16)bus.readMemory((arg + mX) % 256);
-	u16 rightHalfBeforeRead = (arg + 1 + mX) % 256;
-	u16 rightHalf = (u16)bus.readMemory(rightHalfBeforeRead) * 256;
-	u16 address = leftHalf + rightHalf;
-
-	u8 val = bus.readMemory(address);
-	mPC += 1;
-	return val;
-    }
-    case MemoryAccessMode::YIndirectIndexed: {
-	u16 arg = bus.readMemory(mPC);
-	u16 address = bus.readMemory(arg) + bus.readMemory((arg + 1) % 256) * 256 + mY;
-	u8 val = bus.readMemory(address);
-	mPC += 1;
-	return val;
-    }
-    default:
-	fprintf(stderr, "Unimplemented memory access mode number: %u!\n", (unsigned)mode);
-	exit(1);
     }
 }
 
-u16 CPU::getAddressOperand(MemoryAccessMode mode)
+CPU::AddressOperandType CPU::getAddressOperand(MemoryAccessMode mode)
 {
     auto& bus = Bus::the();
     switch (mode) {
     case MemoryAccessMode::Accumulator:
-	return mA;
+	return { mA };
     case MemoryAccessMode::Immediate:
     case MemoryAccessMode::ZeroPage: {
-	 u16 val = bus.readMemory(mPC);
+	 u16 address = bus.readMemory(mPC);
 	 mPC++;
-	 return val;
+	 return address;
     }
     case MemoryAccessMode::Absolute: {
 	u16 address = bus.readMemory16Bits(mPC);
@@ -303,14 +281,16 @@ u16 CPU::getAddressOperand(MemoryAccessMode mode)
 	return address;
     }
     case MemoryAccessMode::XAbsoluteIndexed: {
-	u16 address = bus.readMemory16Bits(mPC) + mX;
+	u16 oldAddress = bus.readMemory16Bits(mPC);
+	u16 address = oldAddress + mX;
 	mPC += 2;
-	return address;
+	return { address, ((address & 0xff00) != (oldAddress & 0xff00)) };
     }
     case MemoryAccessMode::YAbsoluteIndexed: {
-	u16 address = bus.readMemory16Bits(mPC) + mY;
+	u16 oldAddress = bus.readMemory16Bits(mPC);
+	u16 address = oldAddress + mY;
 	mPC += 2;
-	return address;
+	return { address, ((address & 0xff00) != (oldAddress & 0xff00)) };
     }
     case MemoryAccessMode::XZeroPageIndexed: {
 	u16 addr = (bus.readMemory(mPC) + mX) % 256;
@@ -323,18 +303,17 @@ u16 CPU::getAddressOperand(MemoryAccessMode mode)
 	return addr;
     }
     case MemoryAccessMode::XIndirectIndexed: {
-	//exit(1);
 	u16 arg = bus.readMemory(mPC);
 	u16 address = (u16)bus.readMemory((arg + mX) % 256) + (u16)bus.readMemory((arg + 1 + mX) % 256) * 256;
-	//printf("------ The XIndirectIndexed address read is %08x ------\n", address);
 	mPC += 1;
 	return address;
     }
     case MemoryAccessMode::YIndirectIndexed: {
 	u16 arg = bus.readMemory(mPC);
-	u16 address = bus.readMemory(arg) + bus.readMemory((arg + 1) % 256) * 256 + mY;
+	u16 oldAddress = bus.readMemory(arg) + bus.readMemory((arg + 1) % 256) * 256;
+	u16 address = oldAddress + mY;
 	mPC += 1;
-	return address;
+	return { address, ((address & 0xff00) != (oldAddress & 0xff00)) };
     }
 
     default:
@@ -359,8 +338,9 @@ u16 CPU::decode16Bits()
 void CPU::BRK(MemoryAccessMode)
 {
     setProcessorStatus(ProcessorStatus::BreakCommand);
-
+#if DEBUG
     printf("Do I happen as intended at BRK?\n");
+#endif
     pushWord(mPC + 1); // ?
     pushByte((byte)mP);
 
@@ -368,7 +348,11 @@ void CPU::BRK(MemoryAccessMode)
     setProcessorStatus(ProcessorStatus::InterruptDisable);
     
     mClockCycle += 7;
+#if DEBUG
     printf("Break happens!\n");
+#endif
+    // How should BRK quit the system if at all?
+    exit(1);
 }
 
 void CPU::PHA(MemoryAccessMode)
@@ -379,33 +363,53 @@ void CPU::PHA(MemoryAccessMode)
 
 void CPU::ORA(MemoryAccessMode mode)
 {
-    printf("ORA\n");
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     mA |= operand;
     setOrClearStatusIf(mA == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mA & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode, operand.pageCrossed);
 }
 
 void CPU::AND(MemoryAccessMode mode)
 {
-    // just accumulator mode
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
+#if DEBUG
     printf("AND Operand: %08x, mA: %08x, ", operand, mA);
+#endif
     mA &= operand;
+#if DEBUG
     printf("Resulting mA: %08x\n", mA);
+#endif
     setOrClearStatusIf(mA == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mA & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode, operand.pageCrossed);
 }
 
 void CPU::EOR(MemoryAccessMode mode)
 {
     // just accumulator mode
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     mA ^= operand;
     setOrClearStatusIf(mA == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mA & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode, operand.pageCrossed);
 }
 
+static u8 incrementShiftClockCycle(CPU::MemoryAccessMode mode)
+{
+    switch (mode) {
+    case CPU::MemoryAccessMode::Accumulator:
+	return 2;
+    case CPU::MemoryAccessMode::ZeroPage:
+    case CPU::MemoryAccessMode::XZeroPageIndexed:
+	return 5;
+    case CPU::MemoryAccessMode::Absolute:
+    case CPU::MemoryAccessMode::XAbsoluteIndexed:
+	return 6;
+    default:
+	assert(false);
+    }
+}
 
 void CPU::leftShiftImpl(MemoryAccessMode mode, ShiftType type)
 {
@@ -431,6 +435,7 @@ void CPU::leftShiftImpl(MemoryAccessMode mode, ShiftType type)
 	mA = value;
     else
 	Bus::the().writeMemory(address, value);
+    mClockCycle += incrementShiftClockCycle(mode);
 }
 void CPU::rightShiftImpl(MemoryAccessMode mode, ShiftType type)
 {
@@ -455,6 +460,7 @@ void CPU::rightShiftImpl(MemoryAccessMode mode, ShiftType type)
 	mA = value;
     else
 	Bus::the().writeMemory(address, value);
+    mClockCycle += incrementShiftClockCycle(mode);
 }
 
 // These don't work right! And is it normal for accumulator mode to be like that in other memory things? (or some question like that)
@@ -483,15 +489,16 @@ void CPU::ROL(MemoryAccessMode mode)
 
 void CPU::ADC(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     ADCImpl(operand);
+    normallyIncrementClockCycle(mode, operand.pageCrossed);
 }
 
-void CPU::ADCImpl(u8 operand)
+void CPU::ADCImpl(ValueOperandType const& operand)
 {
     u8 oldValue = mA;
     bool didOverflow = false;
-    u8 newValue = oldValue + operand;
+    u8 newValue = oldValue + operand.value;
 
     if (newValue < oldValue)
 	didOverflow = true;
@@ -506,7 +513,7 @@ void CPU::ADCImpl(u8 operand)
     setOrClearStatusIf(didOverflow, ProcessorStatus::Carry);
 
     auto isSignOverflow = [&] () -> bool {
-        return (((oldValue & 0x80) == (operand & 0x80)) &&
+        return (((oldValue & 0x80) == (operand.value & 0x80)) &&
             ((oldValue & 0x80) != (newValue & 0x80)));
     };
     setOrClearStatusIf(isSignOverflow(), ProcessorStatus::Overflow);
@@ -516,46 +523,72 @@ void CPU::ADCImpl(u8 operand)
 
 void CPU::LDA(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     mA = operand;
+#if DEBUG
     printf("This is what LDA got: %08x\n", mA);
+#endif
     setOrClearStatusIf(mA == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mA & 0b10000000, ProcessorStatus::Negative);
-    //normallyIncrementClockCycle(mode);
+    normallyIncrementClockCycle(mode);
 }
 
 void CPU::CMP(MemoryAccessMode mode)
 {
-    // just accumulator mode
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
+#if DEBUG
     printf("value of cmp operand: %08x, Accumulator: %08x\n", operand, mA);
+#endif
     setOrClearStatusIf(mA >= operand, ProcessorStatus::Carry);
     setOrClearStatusIf(mA == operand, ProcessorStatus::Zero);
     setOrClearStatusIf((mA - operand) & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode);
 }
 void CPU::CPX(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
+#if DEBUG
     printf("value of CPX operand: %u\n", operand);
+#endif
     setOrClearStatusIf(mX >= operand, ProcessorStatus::Carry);
     setOrClearStatusIf(mX == operand, ProcessorStatus::Zero);
     setOrClearStatusIf((mX - operand) & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode);
 }
 void CPU::CPY(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
+#if DEBUG
     printf("value of cpy operand: %08x, with mode number %u\n", operand, mode);
+#endif
     setOrClearStatusIf(mY >= operand, ProcessorStatus::Carry);
     setOrClearStatusIf(mY == operand, ProcessorStatus::Zero);
     setOrClearStatusIf((mY - operand) & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode);
 }
 
 void CPU::SBC(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
-    ADCImpl(~operand);
+    ValueOperandType operand = getOperand(mode);
+    ValueOperandType inverseOperand { (u8)~operand.value, operand.pageCrossed };
+    ADCImpl(inverseOperand);
 }
 
+
+static u8 getDecIncClockCycle(CPU::MemoryAccessMode mode)
+{
+    switch (mode) {
+    case CPU::MemoryAccessMode::ZeroPage:
+	return 5;
+    case CPU::MemoryAccessMode::XZeroPageIndexed:
+    case CPU::MemoryAccessMode::Absolute:
+	return 6;
+    case CPU::MemoryAccessMode::XAbsoluteIndexed:
+	return 7;
+    default:
+	assert(false);
+    }
+}
 
 void CPU::DEC(MemoryAccessMode mode)
 {
@@ -566,6 +599,7 @@ void CPU::DEC(MemoryAccessMode mode)
     bus.writeMemory(address, value);
     setOrClearStatusIf(value == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(value & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += getDecIncClockCycle(mode);
 }
 void CPU::INC(MemoryAccessMode mode)
 {
@@ -576,6 +610,7 @@ void CPU::INC(MemoryAccessMode mode)
     bus.writeMemory(address, value);
     setOrClearStatusIf(value == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(value & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += getDecIncClockCycle(mode);
 }
 
 void CPU::DEX(MemoryAccessMode)
@@ -583,24 +618,28 @@ void CPU::DEX(MemoryAccessMode)
     mX--;
     setOrClearStatusIf(mX == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mX & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += 2;
 }
 void CPU::DEY(MemoryAccessMode)
 {
     mY--;
     setOrClearStatusIf(mY == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mY & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += 2;
 }
 void CPU::INX(MemoryAccessMode)
 {
     mX++;
     setOrClearStatusIf(mX == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mX & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += 2;
 }
 void CPU::INY(MemoryAccessMode)
 {
     mY++;
     setOrClearStatusIf(mY == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mY & 0b10000000, ProcessorStatus::Negative);
+    mClockCycle += 2;
 }
 
 void CPU::JMP(MemoryAccessMode mode)
@@ -608,18 +647,24 @@ void CPU::JMP(MemoryAccessMode mode)
     auto& bus = Bus::the();
     switch (mode) {
     case MemoryAccessMode::Absolute: {
+	mClockCycle += 3;
 	mPC = bus.readMemory16Bits(mPC);
 	break;
     }
     case MemoryAccessMode::Indirect: {
+	mClockCycle += 5;
+#if DEBUG
 	printf("The argument is: %08x\n", bus.readMemory16Bits(mPC));
+#endif
 	u16 address = bus.readMemory16Bits(mPC);
 	if ((address & 0xff) == 0xff) {
 	    mPC = (u16)bus.readMemory(address) + (u16((bus.readMemory(address & 0xff00)) << 8));
 	    break;
 	}
 	mPC = bus.readMemory16Bits(address);
+#if DEBUG
 	printf("The value from the argument is: %08x\n", mPC);
+#endif
 	break;
     }
     default:
@@ -631,61 +676,72 @@ void CPU::JMP(MemoryAccessMode mode)
 void CPU::CLV(MemoryAccessMode)
 {
     clearProcessorStatus(ProcessorStatus::Overflow);
+    mClockCycle += 2;
 }
 
 void CPU::CLC(MemoryAccessMode)
 {
     clearProcessorStatus(ProcessorStatus::Carry);
+    mClockCycle += 2;
 }
 void CPU::CLD(MemoryAccessMode)
 {
     clearProcessorStatus(ProcessorStatus::DecimalMode);
+    mClockCycle += 2;
+}
+void CPU::CLI(MemoryAccessMode)
+{
+    clearProcessorStatus(ProcessorStatus::InterruptDisable);
+    mClockCycle += 2;
 }
 
 void CPU::RTS(MemoryAccessMode)
 {
+#if DEBUG
     printf("RTS: Before stack popping\n");
+#endif
     printStack(10);
     mPC = popWord() + 1;
-#if 1
+#if TEST_ROM
     if (u8 result = Bus::the().readMemory(0); result > 0) {
-	printf("!!!!! FAILED TEST location 00h, error code %08x !!!!!\n", result);
+	printf("\n!!!!! FAILED TEST, error code '%x' !!!!!\n", result);
 	exit(1);
     }
 #endif
-    if (u8 result = Bus::the().readMemory(2); result > 0) {
-	printf("!!!!! FAILED TEST location 02h, error code %08x !!!!!\n", result);
-	exit(1);
-    }
-    if (u8 result = Bus::the().readMemory(3); result > 0) {
-	printf("!!!!! FAILED TEST location 03h, error code %08x !!!!!\n", result);
-	exit(1);
-    }
-
+    mClockCycle += 6;
+#if DEBUG
     printf("I happen and pop to %08x\n", mPC);
+#endif
 }
 void CPU::RTI(MemoryAccessMode)
 {
     mP = (ProcessorStatus)popByte();
     mPC = popWord();
+#if DEBUG
     printf("RTI happens and I pop to %08x\n", mPC);
+#endif
+    mClockCycle += 6;
     //exit(1);
 }
 
 void CPU::LDX(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     mX = operand;
+#if DEBUG
     printf("LDX turns mX into %08x\n", mX);
+#endif
     setOrClearStatusIf(mX == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mX & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode);
 }
 void CPU::LDY(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
     mY = operand;
     setOrClearStatusIf(mY == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mY & 0b10000000, ProcessorStatus::Negative);
+    normallyIncrementClockCycle(mode);
 }
 
 void CPU::JSR(MemoryAccessMode)
@@ -694,21 +750,18 @@ void CPU::JSR(MemoryAccessMode)
     printStack(10);
     u16 destination = Bus::the().readMemory16Bits(mPC);
     mPC = destination;
+    mClockCycle += 6;
 }
 
 void CPU::NOP(MemoryAccessMode)
 {
     mClockCycle += 2;
+#if TEST_ROM
     static unsigned testNumber = 0;
-    if (u8 result = Bus::the().readMemory(2); result != 0) {
-	printf("!!!!! FAILED TEST location 02h, error code %08x !!!!!\n", result);
-	exit(1);
-    }
-    if (u8 result = Bus::the().readMemory(3); result != 0) {
-	printf("!!!!! FAILED TEST location 03h, error code %08x !!!!!\n", result);
-	exit(1);
-    }
-    printf("----- Starting test %x -----\n", ++testNumber);
+    printf("%2x, ", ++testNumber);
+    if (testNumber % 16 == 0)
+	printf("\n");
+#endif
 }
 
 void CPU::SEC(MemoryAccessMode)
@@ -730,13 +783,17 @@ void CPU::SED(MemoryAccessMode)
 void CPU::PHP(MemoryAccessMode)
 {
     pushByte((u8)mP);
+#if DEBUG
     printf("Status being pushed: %u\n", mP);
+#endif
     mClockCycle += 2;
 }
 void CPU::PLA(MemoryAccessMode)
 {
     mA = popByte();
+#if DEBUG
     printf("Status being popped: %08x\n", mA);
+#endif
     setOrClearStatusIf(mA == 0, ProcessorStatus::Zero);
     setOrClearStatusIf(mA & 0b10000000, ProcessorStatus::Negative);
 
@@ -745,127 +802,111 @@ void CPU::PLA(MemoryAccessMode)
 void CPU::PLP(MemoryAccessMode)
 {
     mP = (ProcessorStatus)popByte();
+#if DEBUG
     printf("Status being popped: %08x\n", mA);
+#endif
 
     mClockCycle += 2;
+}
+
+static u8 calculateBranchClockCycle(u16 fromAddress, u16 toAddress)
+{
+    u8 cycleInc = 1;
+    if ((toAddress & 0xff00) != (fromAddress & 0xff00))
+	cycleInc += 1;
+    return cycleInc;
+}
+
+void CPU::branchImpl(bool condition)
+{
+    mClockCycle += 2;
+    if (!condition) {
+	mPC++;
+	return;
+    }
+    char relative = decode8Bits();
+    mClockCycle += calculateBranchClockCycle(mPC, mPC += relative);
 }
 
 void CPU::BCS(MemoryAccessMode)
 {
-    if (processorStatusHas(ProcessorStatus::Carry)) {
-	mPC += decode8Bits();
-	return;
-    }
-    mPC++;
+    branchImpl(processorStatusHas(ProcessorStatus::Carry));
 }
 
 void CPU::BCC(MemoryAccessMode)
 {
-    if (!processorStatusHas(ProcessorStatus::Carry)) {
-	mPC += decode8Bits();
-	return;
-    }
-    mPC++;
+    branchImpl(!processorStatusHas(ProcessorStatus::Carry));
 }
 
 void CPU::BEQ(MemoryAccessMode)
 {
-    if (processorStatusHas(ProcessorStatus::Zero)) {
-	mPC += decode8Bits();
-	return;
-    }
-    mPC++;
+    branchImpl(processorStatusHas(ProcessorStatus::Zero));
 }
 
 void CPU::BNE(MemoryAccessMode)
 {
-    if (!processorStatusHas(ProcessorStatus::Zero)) {
-	printf("BNE Branches!\n");
-	mPC += decode8Bits();
-	return;
-    }
-    mPC++;
+    branchImpl(!processorStatusHas(ProcessorStatus::Zero));
 }
 void CPU::BVS(MemoryAccessMode)
 {
-    mClockCycle += 2;
-    if (processorStatusHas(ProcessorStatus::Overflow)) {
-	printf("BVS Branches!\n");
-	mPC += decode8Bits();
-	mClockCycle += 1;
-	return;
-    }
-    mPC++;
+    branchImpl(processorStatusHas(ProcessorStatus::Overflow));
 }
 
 void CPU::BVC(MemoryAccessMode)
 {
-    mClockCycle += 2;
-    if (!processorStatusHas(ProcessorStatus::Overflow)) {
-	printf("BVC Branches!\n");
-	mPC += decode8Bits();
-	mClockCycle += 1;
-	return;
-    }
-    mPC++;
+    branchImpl(!processorStatusHas(ProcessorStatus::Overflow));
 }
 void CPU::BMI(MemoryAccessMode)
 {
-    mClockCycle += 2;
-    if (processorStatusHas(ProcessorStatus::Negative)) {
-	printf("BMI Branches!\n");
-	mPC += decode8Bits();
-	mClockCycle += 1;
-	return;
-    }
-    mPC++;
+    branchImpl(processorStatusHas(ProcessorStatus::Negative));
 }
 void CPU::BPL(MemoryAccessMode)
 {
-    mClockCycle += 2;
-    if (!processorStatusHas(ProcessorStatus::Negative)) {
-	printf("BPL Branches!\n");
-	mPC += decode8Bits();
-	mClockCycle += 1;
-	return;
-    }
-    mPC++;
+    branchImpl(!processorStatusHas(ProcessorStatus::Negative));
 }
 
 void CPU::STA(MemoryAccessMode mode)
 {
     u16 addr = getAddressOperand(mode);
+#if DEBUG
     printf("The address that STA got: %08x\n", addr);
+#endif
     Bus::the().writeMemory(addr, mA);
-    //normallyIncrementClockCycle(mode);
+    normallyIncrementClockCycle(mode, true);
 }
 void CPU::STX(MemoryAccessMode mode)
 {
     u16 addr = getAddressOperand(mode);
     Bus::the().writeMemory(addr, mX);
+#if DEBUG
     printf("STX stores value %08x at %08x\n", mX, addr);
-    //normallyIncrementClockCycle(mode);
+#endif
+    normallyIncrementClockCycle(mode, true);
 }
 void CPU::STY(MemoryAccessMode mode)
 {
     u16 addr = getAddressOperand(mode);
     Bus::the().writeMemory(addr, mY);
-    //normallyIncrementClockCycle(mode);
+    normallyIncrementClockCycle(mode, true);
 }
 
 
 
 void CPU::BIT(MemoryAccessMode mode)
 {
-    u8 operand = getOperand(mode);
+    ValueOperandType operand = getOperand(mode);
+#if DEBUG
     printf("BIT Operand: %u, Accumulator: %u\n", operand, mA);
-    u8 result = mA & operand;
+#endif
+    u8 result = mA & (u8)operand;
+#if DEBUG
     printf("The result of the BIT operation is: %u\n", result);
+#endif
     setOrClearStatusIf(!result, ProcessorStatus::Zero);
     setOrClearStatusIf(operand & 0b10000000, ProcessorStatus::Negative);
     setOrClearStatusIf(operand & 0b01000000, ProcessorStatus::Overflow);
 
-    //normallyIncrementClockCycle(mode);
+    normallyIncrementClockCycle(mode);
 }
 
 void CPU::TAY(MemoryAccessMode)
@@ -910,11 +951,7 @@ void CPU::TSX(MemoryAccessMode)
 }
 void CPU::TXS(MemoryAccessMode)
 {
-    //printf("SP before copy: %08x, word is %08x\n", mSP, peekWord());
     mSP = mX;
-    //printf("SP after copy: %08x, word is %08x\n", mSP, peekWord());
-    //exit(1);
-
     mClockCycle += 2;
 }
 
