@@ -13,7 +13,11 @@ void CPU::reset()
     mA = mX = mY = 0;
     mSP = 0xfd;
     mIsRunning = true;
-    mPC = Bus::the().readMemory16Bits(Bus::the().pcStartPoint());//Bus::the().ramStart();//0xc000;
+#if TEST_ROM
+    mPC = 0xc000;
+#else
+    mPC = Bus::the().readMemory16Bits(Bus::the().pcStartPoint());
+#endif
     mClockCycle = 0;
 }
 
@@ -346,22 +350,22 @@ u16 CPU::decode16Bits()
 
 void CPU::BRK(MemoryAccessMode)
 {
+
+    setProcessorStatus(ProcessorStatus::InterruptDisable);
+
+    pushWord(mPC + 1);
+
     setProcessorStatus(ProcessorStatus::BreakCommand);
-#if DEBUG
-    printf("Do I happen as intended at BRK?\n");
-#endif
-    pushWord(mPC + 1); // ?
     pushByte((byte)mP);
+    clearProcessorStatus(ProcessorStatus::BreakCommand);
 
     mPC = Bus::the().readMemory16Bits(0xfffe);
-    setProcessorStatus(ProcessorStatus::InterruptDisable);
     
     mClockCycle += 7;
 #if DEBUG
     printf("Break happens!\n");
 #endif
     // How should BRK quit the system if at all?
-    exit(1);
 }
 
 void CPU::PHA(MemoryAccessMode)
