@@ -19,7 +19,8 @@ Window::Window()
     QObject::connect(weather, &WeatherManager::updated, weatherLabel, &QLabel::setText);
 
     LightManager *lights = new LightManager();
-    lights->setMode(1);
+    QObject::connect(button, SIGNAL(pressed()), lights, SLOT(setMode()));
+    //lights->setMode(1);
 
 
     QGridLayout* layout = new QGridLayout(this);

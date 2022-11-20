@@ -26,6 +26,7 @@ public:
 
 public slots:
     void setMode(int mode);
+    void setMode();
 };
 
 

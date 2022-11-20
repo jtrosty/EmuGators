@@ -42,16 +42,28 @@ void LightManager::setMode(int mode){
         switch(mode){
             case 0:
                 uno->write(QString('0').toStdString().c_str());
+                uno->flush();
                 break;
             case 1:
                 uno->write(QString('1').toStdString().c_str());
+                uno->flush();
                 break;
             case 2:
                 uno->write(QString('2').toStdString().c_str());
+                uno->flush();
                 break;
 
 
         }
+    }
+    else{
+        qDebug() << "Couldn't write to serial!";
+    }
+}
+void LightManager::setMode(){
+    if(uno->isWritable()){
+        uno->write(QString('2').toStdString().c_str());
+        //uno->flush();
     }
     else{
         qDebug() << "Couldn't write to serial!";
