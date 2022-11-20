@@ -126,7 +126,7 @@ public:
     };
     void normallyIncrementClockCycle(MemoryAccessMode mode, bool pageCrossed = false);
 
-    
+    void NMI();
     ProcessorStatus& P() { return mP; }
     u8& SP() { return mSP; }
     u16& PC() { return mPC; }
