@@ -22,10 +22,7 @@ void WeatherManager::requestData(){
 
 void WeatherManager::updateWeatherEffect(){
     currentWeather = "Rain";
-<<<<<<< HEAD
     emit updated(currentWeather);
-=======
->>>>>>> main
     if(weatherTargets.empty()){
         if(currentWeather == "Clouds"){
             for(int i = 0; i < 6; i++){

@@ -20,7 +20,6 @@ Window::Window(u32* _pixelData)
 
     LightManager *lights = new LightManager();
     QObject::connect(button, SIGNAL(pressed()), lights, SLOT(setMode()));
-    //lights->setMode(1);
 
 
     QGridLayout* layout = new QGridLayout(this);
