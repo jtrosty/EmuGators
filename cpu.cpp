@@ -13,13 +13,16 @@ void CPU::reset()
     mA = mX = mY = 0;
     mSP = 0xfd;
     mIsRunning = true;
-    mPC = Bus::the().readMemory16Bits(Bus::the().pcStartPoint());//Bus::the().ramStart();//0xc000;
+
 
      u16 address = Bus::the().readMemory16Bits(0xFFFC);
-     mPC = address;
-     //mPC = 0x9EC7;
-     mPC = 0xC79E;
-     //mPC = 0xc78a;
+
+#if TEST_ROM
+    mPC = 0xc000;
+#else
+    mPC = Bus::the().readMemory16Bits(Bus::the().pcStartPoint());
+#endif
+
     mClockCycle = 0;
 }
 
@@ -329,6 +332,15 @@ CPU::AddressOperandType CPU::getAddressOperand(MemoryAccessMode mode)
     return mA;
 }
 
+void CPU::NMI()
+{
+    pushWord(mPC);
+    pushByte((u8)mP | 0x30);
+    mClockCycle += 7;
+
+    mPC = Bus::the().readMemory16Bits(0xfffa);
+}
+
 
 u8 CPU::decode8Bits()
 {
@@ -343,9 +355,12 @@ u16 CPU::decode16Bits()
 
 void CPU::BRK(MemoryAccessMode)
 {
+
+
     setProcessorStatus(ProcessorStatus::InterruptDisable);
 
     pushWord(mPC + 1);
+
     setProcessorStatus(ProcessorStatus::BreakCommand);
     pushByte((byte)mP);
     clearProcessorStatus(ProcessorStatus::BreakCommand);
@@ -357,7 +372,6 @@ void CPU::BRK(MemoryAccessMode)
     printf("Break happens!\n");
 #endif
     // How should BRK quit the system if at all?
-
 }
 
 
@@ -721,7 +735,7 @@ void CPU::RTS(MemoryAccessMode)
 }
 void CPU::RTI(MemoryAccessMode)
 {
-    mP = (ProcessorStatus)popByte();
+    mP = (ProcessorStatus)((popByte() & 0xef) | ((u8)mP & 0x10) | 0x20);
     mPC = popWord();
 #if DEBUG
     printf("RTI happens and I pop to %08x\n", mPC);
@@ -788,7 +802,7 @@ void CPU::SED(MemoryAccessMode)
 
 void CPU::PHP(MemoryAccessMode)
 {
-    pushByte((u8)mP);
+    pushByte((u8)mP | 0x30);
 #if DEBUG
     printf("Status being pushed: %u\n", mP);
 #endif
@@ -807,7 +821,7 @@ void CPU::PLA(MemoryAccessMode)
 }
 void CPU::PLP(MemoryAccessMode)
 {
-    mP = (ProcessorStatus)popByte();
+    mP = (ProcessorStatus)((popByte() & 0xef) | ((u8)mP & 0x10) | 0x20);
 #if DEBUG
     printf("Status being popped: %08x\n", mA);
 #endif
@@ -830,7 +844,7 @@ void CPU::branchImpl(bool condition)
 	mPC++;
 	return;
     }
-    u8 relative = decode8Bits();
+    char relative = decode8Bits();
     mClockCycle += calculateBranchClockCycle(mPC, mPC += relative);
 }
 
