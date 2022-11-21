@@ -6,5 +6,8 @@
         <file>images/test_rain_1.png</file>
         <file>images/test_rain_2.png</file>
         <file>roms/donkey kong.nes</file>
+        <file>roms/color_test.nes</file>
+        <file>roms/test_cpu_exec_space_apu.nes</file>
+        <file>roms/test_cpu_exec_space_ppuio.nes</file>
     </qresource>
 </RCC>

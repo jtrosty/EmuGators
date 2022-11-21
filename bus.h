@@ -67,6 +67,7 @@ public:
     ALWAYS_INLINE u8 getController(Badge<GLWidget>) { return *mController; }
     
     u8* rawMemory() { return memory; }
+    u8 debug_prgRom[0x3FFF];
     
     u16 ramStart() const { return mRamStart; }
     u16 pcStartPoint() const { return pcStartAddress; }

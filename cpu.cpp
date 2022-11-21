@@ -13,11 +13,16 @@ void CPU::reset()
     mA = mX = mY = 0;
     mSP = 0xfd;
     mIsRunning = true;
+
+
+     u16 address = Bus::the().readMemory16Bits(0xFFFC);
+
 #if TEST_ROM
     mPC = 0xc000;
 #else
     mPC = Bus::the().readMemory16Bits(Bus::the().pcStartPoint());
 #endif
+
     mClockCycle = 0;
 }
 
@@ -351,6 +356,7 @@ u16 CPU::decode16Bits()
 void CPU::BRK(MemoryAccessMode)
 {
 
+
     setProcessorStatus(ProcessorStatus::InterruptDisable);
 
     pushWord(mPC + 1);
@@ -367,6 +373,7 @@ void CPU::BRK(MemoryAccessMode)
 #endif
     // How should BRK quit the system if at all?
 }
+
 
 void CPU::PHA(MemoryAccessMode)
 {

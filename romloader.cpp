@@ -29,3 +29,15 @@ RomLoader::RomLoader() {
 QByteArray RomLoader::debug_getDonkeyKongRom() {
     return donkeyKongRom;
 }
+
+QByteArray RomLoader::loadTestRom(QString filename) {
+    QString path = ":/resources/roms/";
+    QFile fileLoading(path + filename);
+    if (!fileLoading.open(QIODevice::ReadOnly)) {
+        qInfo("File faield to open");
+    }
+    else {
+       testRom = fileLoading.readAll();
+    }
+    fileLoading.close();
+}
