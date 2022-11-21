@@ -67,13 +67,13 @@ namespace NESEmulator {
 
             // Depends on if in horizontal mode or veritcal mode.  Logic not yet yet
             // TODO: Need logic for if veritcal or horizontalmode
-            if (true) {
+            if (ppuControl.VramAddressIncrement) {
                 // If vertical mode
-                ppuADDR += 32;
+                vram.reg += 32;
             }
             else {
                 // if horizontal mode
-                ppuADDR += 1;
+                vram.reg += 1;
             }
 
             break;
@@ -106,7 +106,8 @@ namespace NESEmulator {
             break;
         }
         case 0x0002: {
-            result = ppuStatus.reg & 0xE0;
+            ppuStatus.verticalBlank = 1;
+            result = (ppuStatus.reg & 0xE0) | (ppuDATA & 0x1F);
 
             ppuStatus.verticalBlank = 0;
             ppuAddressLatch = 0;

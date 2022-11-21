@@ -165,12 +165,12 @@ public:
     void debug_setPixelPatternTable(int patternTable, u16 x, u16 y, u32 colorValue);
     void debug_loadRomDisplayVram();
     void debug_drawToScreen(QByteArray donkeyKong);
+    void ppuWriteRegister(u16 address, u8 data);
+    u8 ppuReadRegister(u16 address);
 
 private:
-    void ppuWriteRegister(u16 address, u8 data);
     void writeToBus(u16 address, u8 data);
     u8 readFromBus(u16 address);
-    u8 ppuReadRegister(u16 address);
     void ppuWriteVRAM(u16 address, u8 data);
     u8 ppuReadVRAM(u16 address);
     u8 getPalette(u16 address);
