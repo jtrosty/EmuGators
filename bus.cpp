@@ -124,7 +124,7 @@ u8 Bus::readMemory(u16 addr) {
         // PPU Mirroring
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
         addr = (addr & 0x0007) + ppuRegisterStart;
-        NESEmulator::PPU::the().ppuReadRegister(addr);
+        return NESEmulator::PPU::the().ppuReadRegister(addr);
 
     }
     else if (addr >= ppuIOStart && addr < apuControlIOStart) {
