@@ -127,7 +127,7 @@ namespace NESEmulator {
         case 0x0002: {
             // ppuStatus.verticalBlank = 1;
             ppuStatus.reg = 0xFF;
-            ppuDATA = 0xFF;
+            //ppuDATA = 0xFF;
             result = (ppuStatus.reg & 0xE0) | (ppuDATA & 0x1F);
 
             ppuStatus.verticalBlank = 0;
@@ -159,8 +159,7 @@ namespace NESEmulator {
             // VRAM read/write data register
             result = ppuDATA;
             if (ppuADDR < 0x3F00) {
-
-            }
+ }
             else if (ppuADDR >= 0x3F00) {
                 result = ppuDATA;
             }
@@ -245,10 +244,17 @@ namespace NESEmulator {
                 // 1 cycle per pixel
                 // It takes 2 cycles to write a 16-bit word.
                 // other other case will be skipped.
-                switch (cycle % 8) {
+                switch ((cycle - 1) % 8) {
                 // NT byte
                 case 0:
-                    ppuReadVRAM(nameTableStart | vram.reg & 0x0FFF);
+                    // This will set the currnet shifter which will be used below.
+                    setCurrentShifter();
+
+                    // this is the port of the prepatory phase and gets the next nametable tile.
+                    // the address starts tt VRAM and then uses the LSB of vram.reg to get the correct byte.
+                    // the 12 bytes are, course x (5 bits), and course y (5 bits), with the name table values as the MSBs.
+                    // each name table is 32 x 32.
+                    bgNextNametableValue = ppuReadVRAM(nameTableStart | vram.reg & 0x0FFF);
                     break;
                 case 1:
                     // Skip, it takes 2 cycles to perform the task in case 0
@@ -262,13 +268,43 @@ namespace NESEmulator {
                     // || |||| +++------ high 3 bits of coarse Y (y/4)
                     // || ++++---------- attribute offset (960 bytes)
                     // ++--------------- nametable select
-                    bgTileAttribute = ppuReadVRAM(nameTableAttributeStart |
-                                vram.nameTableY << 11 					  |
-                                vram.nameTableX << 10   				  |
-                                vram.coarseX >> 2 						  |
-                                (vram.coarseY >> 2) << 3);
-                    // TODO (Jon): I think there is more here
+                    // For background tiles, the last 64 bytes of each nametable
+                    // are reserved for assigning a specific palette to a part of the background.
+                    // This section is called an attribute table.
+                    //course x and y are divided by 4,(shifted 2) because
+                    bgNextTileAttribute = ppuReadVRAM(nameTableAttributeStart |
+                                    vram.nameTableY << 11 					  |
+                                    vram.nameTableX << 10   				  |
+                                    0b001111000000                            |
+                                    vram.coarseX >> 2 						  |
+                                    (vram.coarseY >> 2) << 3);
 
+                    // TODO (Jon): I think there is more here
+                    // Now we ahve bgNextTileAttribute, this bye of pallete data, covers a 4x4 block of
+                    // 0b 11 01 10 00 <--- each 2 bits ared for a the TL, TR, BL, bR of a a group of 4x4 blocks.
+                    // find out if we are in TL, TR, BL, BR
+                    topOrBottom = vram.coarseY % 4;
+                    leftOrRight = vram.coarseX % 4;
+                    if (topOrBottom < 2 ) { // we are on top
+                        if (leftOrRight < 2) { // We are on left
+                            // TL
+                            bgNextTileAttribute = ((bgNextTileAttribute & 0b11000000) >> 6);
+                        }
+                        else {
+                            // TR
+                            bgNextTileAttribute = ((bgNextTileAttribute & 0b00110000) >> 4);
+                        }
+                    }
+                    else {
+                        if (leftOrRight < 2) { // We are on left
+                            // BL
+                            bgNextTileAttribute = ((bgNextTileAttribute & 0b00001100) >> 2);
+                        }
+                        else {
+                            // BR
+                            bgNextTileAttribute = ((bgNextTileAttribute & 0b00000011));
+                        }
+                    }
                     break;
                 case 3:
                     // Skip, it takes 2 cycles to perform the task above
@@ -358,20 +394,10 @@ namespace NESEmulator {
 
             int x = 0;
             int y = 0;
-            setPixel(cycle, scanline, pixelColor);
+            if (scanline >= 0 && scanline < 240 && cycle < 256 ) {
+                setPixel(cycle, scanline,pixelColor);
+            }
 
-            /*
-                    patternLSB = ppuReadVRAM(patternTable * sprite0Start + offset + row + 0x0000);
-                    patternMSB = ppuReadVRAM(patternTable * sprite0Start + offset + row + 0x0008);
-
-                    for (u16 col = 0; col < pixelInTable; col++) {
-                        // Need to loop through each byute plane and generate the value for each pixel
-                        // The value determines the color from the palette table
-                        // ONly need 1 bit from each of the MSB an LSB
-                        u8 pixelColorValue = (patternLSB & 0x01) + ((patternMSB & 0x01 )<< 1 );
-                        int x = (spriteX * 8 + (7 - col));
-                        int y = (spriteY * 8 + row);
-                        */
         }
         cycle++;
         if (cycle >=341) {
@@ -385,9 +411,11 @@ namespace NESEmulator {
 
     void PPU::setPixel(int x, int y, u32 color) {
         pixelData[(y * pixelWidth) + x] = color;
+        /*
         for (int i = 0; i < 1000; i++) {
             pixelData[i] = 0xFFFFFFFF;
         }
+        */
     }
 
     void PPU::incrementX() {

@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
 
     // Setup Pixels for game
-    int numOfPixels = 128 * 128;
+    int numOfPixels = 240 * 256;
     u32* pixels = new u32[numOfPixels];
     for (int i = 0; i < numOfPixels; i++) {
         pixels[i] = 0;

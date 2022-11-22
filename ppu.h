@@ -138,11 +138,19 @@ private:
     u16 cycle = 0;
 
     // Background variables
-    u8 bgNametableValue = 0;
-    u8 bgTileAttribute = 0;
+    u16 bgNextNametableValue = 0;
+    u8 bgNextTileAttribute = 0;
     u8 bgPatternLSB = 0;
     u8 bgPatternMSB = 0;
 
+    // Shifters
+    u16 patternTableShifterHi = 0x00;
+    u16 patternTableShifterLow = 0x00;
+    u8 palleteShifterHi = 0x0;
+    u8 palleteShifterLow = 0x0;
+
+    void setCurrentShifter();
+    void updateShifters();
 
     struct ObjectAttributeMemory {
         u8 yPosition;
