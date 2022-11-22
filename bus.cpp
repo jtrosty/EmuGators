@@ -39,7 +39,7 @@ void Bus::execLoop() {
     // NMI control
     if (Bus::the().readMemory(addrNMI)) {
         // TODO do stuff?? or is it already handled
-
+        CPU::the().NMI();
     }
     clockCycle++;
 }

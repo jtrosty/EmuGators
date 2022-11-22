@@ -19,13 +19,13 @@ PPU::PPU() {
         switch (index) {
         case 0x0000: {
             ppuControl.reg = data;
-            tempVram.nameTableX = ppuControl.scrollingNametableX;
-            tempVram.nameTableY = ppuControl.scrollingNametableY;
+            tempVramLoopy.nameTableX = ppuControl.scrollingNametableX;
+            tempVramLoopy.nameTableY = ppuControl.scrollingNametableY;
             break;
         }
         case 0x0001: {
             ppuMask.reg = data;
-            ppuMask.reg = 0x0F;
+            //ppuMask.reg = 0x0F;
             break;
         }
         case 0x0002: {
@@ -53,12 +53,12 @@ PPU::PPU() {
             // affect till the next grame.
             // Write only
             if (ppuAddressLatch == 1) {
-                tempVram.fineY = data & 0x07;
-                tempVram.coarseY = data >> 3;
+                tempVramLoopy.fineY = data & 0x07;
+                tempVramLoopy.coarseY = data >> 3;
                 ppuAddressLatch = 0;
             } else {
                 fineX = data & 0x07;
-                tempVram.coarseX = data >> 3;
+                tempVramLoopy.coarseX = data >> 3;
                 ppuAddressLatch = 1;
             }
 
@@ -67,32 +67,31 @@ PPU::PPU() {
         case 0x0006: {
             // Write only
             // ppu addess, write only
-            ppuADDR = data;
             if (ppuAddressLatch == 1) {
-                tempVram.reg = (tempVram.reg & 0xFF00) | ppuDATA;
-                vram = tempVram;
+                tempVramLoopy.reg = (tempVram.reg & 0xFF00) | ppuDATA;
+                vramLoopy = tempVramLoopy;
                 ppuAddressLatch = 0;
             } else {
-                tempVram.reg = (tempVram.reg & 0x00FF) | (u16)(ppuDATA & 0x3F) << 8;
-                vram = tempVram;
+                tempVramLoopy.reg = (tempVram.reg & 0x00FF) | (u16)(ppuDATA & 0x3F) << 8;
+                vramLoopy = tempVramLoopy;
                 ppuAddressLatch = 1;
             }
             break;
         }
         case 0x0007: {
             // VRAM read/write data register
-            ppuWriteVRAM(vram.reg, data);
+            ppuWriteVRAM(vramLoopy.reg, data);
             // Increment the nametable addressw
 
             // Depends on if in horizontal mode or veritcal mode.  Logic not yet yet
             // TODO: Need logic for if veritcal or horizontalmode
             if (ppuControl.VramAddressIncrement) {
                 // If vertical mode
-                vram.reg += 32;
+                vramLoopy.reg += 32;
             }
             else {
                 // if horizontal mode
-                vram.reg += 1;
+                vramLoopy.reg += 1;
             }
 
             break;
@@ -126,7 +125,7 @@ PPU::PPU() {
         }
         case 0x0002: {
             // ppuStatus.verticalBlank = 1;
-            ppuStatus.reg = 0xFF;
+            //ppuStatus.reg = 0xFF;
             //ppuDATA = 0xFF;
             result = (ppuStatus.reg & 0xE0) | (ppuDATA & 0x1F);
 
@@ -158,8 +157,12 @@ PPU::PPU() {
         case 0x0007: {
             // VRAM read/write data register
             result = ppuDATA;
+            // the load the ppuData with the next byte
+            ppuDATA = ppuReadVRAM(vramLoopy.reg);
+
             if (ppuADDR < 0x3F00) {
- }
+                // Nothing? delete
+            }
             else if (ppuADDR >= 0x3F00) {
                 result = ppuDATA;
             }
@@ -251,10 +254,10 @@ PPU::PPU() {
                     setCurrentShifter();
 
                     // this is the port of the prepatory phase and gets the next nametable tile.
-                    // the address starts tt VRAM and then uses the LSB of vram.reg to get the correct byte.
+                    // the address starts tt VRAM and then uses the LSB of vramLoopy.reg to get the correct byte.
                     // the 12 bytes are, course x (5 bits), and course y (5 bits), with the name table values as the MSBs.
                     // each name table is 32 x 32.
-                    bgNextNametableValue = ppuReadVRAM(nameTableStart | vram.reg & 0x0FFF);
+                    bgNextNametableValue = ppuReadVRAM(nameTableStart | vramLoopy.reg & 0x0FFF);
                     break;
                 case 1:
                     // Skip, it takes 2 cycles to perform the task in case 0
@@ -273,18 +276,18 @@ PPU::PPU() {
                     // This section is called an attribute table.
                     //course x and y are divided by 4,(shifted 2) because
                     bgNextTileAttribute = ppuReadVRAM(nameTableAttributeStart |
-                                    vram.nameTableY << 11 					  |
-                                    vram.nameTableX << 10   				  |
+                                    vramLoopy.nameTableY << 11 					  |
+                                    vramLoopy.nameTableX << 10   				  |
                                     0b001111000000                            |
-                                    vram.coarseX >> 2 						  |
-                                    (vram.coarseY >> 2) << 3);
+                                    vramLoopy.coarseX >> 2 						  |
+                                    (vramLoopy.coarseY >> 2) << 3);
 
                     // TODO (Jon): I think there is more here
                     // Now we ahve bgNextTileAttribute, this bye of pallete data, covers a 4x4 block of
                     // 0b 11 01 10 00 <--- each 2 bits ared for a the TL, TR, BL, bR of a a group of 4x4 blocks.
                     // find out if we are in TL, TR, BL, BR
-                    topOrBottom = vram.coarseY % 4;
-                    leftOrRight = vram.coarseX % 4;
+                    topOrBottom = vramLoopy.coarseY % 4;
+                    leftOrRight = vramLoopy.coarseX % 4;
                     if (topOrBottom < 2 ) { // we are on top
                         if (leftOrRight < 2) { // We are on left
                             // TL
@@ -318,7 +321,7 @@ PPU::PPU() {
                     //                -XXX the fine control called fineY, only 3 bits, 0-7
                     bgPatternLSB = ppuReadVRAM((ppuControl.backgroundPatternTable << 12)
                                                + ((u16)bgNextNametableValue << 4)
-                                               + (vram.fineY) + 0x0000);
+                                               + (vramLoopy.fineY) + 0x0000);
 
                     break;
                 case 5:
@@ -328,7 +331,7 @@ PPU::PPU() {
                 case 6:
                     bgPatternMSB = ppuReadVRAM((ppuControl.backgroundPatternTable << 12)
                                                + ((u16)bgNextNametableValue << 4)
-                                               + (vram.fineY) + 0x0008);
+                                               + (vramLoopy.fineY) + 0x0008);
                     break;
                 case 7:
                     // Skip, it takes 2 cycles to perform the task above
@@ -346,11 +349,11 @@ PPU::PPU() {
                 if (cycle == 338 || cycle == 340) {
                     // The case 1-8 repeats from above after 280, but no more pixels are displayed to
                     // The screen, this below does nothign
-                    ppuReadVRAM(nameTableStart | vram.reg & 0x0FFF);
+                    ppuReadVRAM(nameTableStart | vramLoopy.reg & 0x0FFF);
                 }
                 if (scanline == -1 && cycle >= 280) {
                     // We have completed the row, in preperation for the next, perform
-                    // Loopy register y transform from tvram to vram.
+                    // Loopy register y transform from tvramLoopy to vramLoopy.
                     loopyTransferY();
                 }
             }
@@ -434,7 +437,7 @@ PPU::PPU() {
         pixelData[(y * pixelWidth) + x] = color;
         /*
         for (int i = 0; i < 1000; i++) {
-            pixelData[i] = 0xFFFFFFFF;
+            pixelData[i] = 0xFF00FFFF;
         }
         */
     }
@@ -443,47 +446,47 @@ PPU::PPU() {
         // If rendering is activiated.
         if (ppuMask.renderBackground || ppuMask.renderSprites) {
             // If we get too the end
-            if (vram.coarseX == 31) {
+            if (vramLoopy.coarseX == 31) {
                 // If we get to the end, go back to the begining of the
                 // NEXT nametable
-                vram.coarseX = 0;
-                vram.nameTableX = ~vram.nameTableX;
+                vramLoopy.coarseX = 0;
+                vramLoopy.nameTableX = ~vramLoopy.nameTableX;
             }
             else {
-                vram.coarseX++;
+                vramLoopy.coarseX++;
             }
         }
     }
 
     void PPU::incrementY() {
         // Icrement fineY
-        if (vram.fineY < 7) {
-            vram.fineY++;
+        if (vramLoopy.fineY < 7) {
+            vramLoopy.fineY++;
         }
         else {
-            vram.fineY = 0; // Reset fine y then reset coarse. flip table if scrolling.
-            if (vram.coarseY == 31) {
-                vram.coarseY = 0;
-                vram.nameTableY = ~vram.nameTableY;
+            vramLoopy.fineY = 0; // Reset fine y then reset coarse. flip table if scrolling.
+            if (vramLoopy.coarseY == 31) {
+                vramLoopy.coarseY = 0;
+                vramLoopy.nameTableY = ~vramLoopy.nameTableY;
             }
             else {
-                vram.coarseY++;
+                vramLoopy.coarseY++;
             }
         }
     }
 
     void PPU::loopyTransferX() {
         if (ppuMask.renderBackground || ppuMask.renderSprites) {
-            vram.nameTableX = tempVram.nameTableX;
-            vram.coarseX = tempVram.coarseX;
+            vramLoopy.nameTableX = tempVramLoopy.nameTableX;
+            vramLoopy.coarseX = tempVramLoopy.coarseX;
         }
     }
 
     void PPU::loopyTransferY() {
         if (ppuMask.renderBackground || ppuMask.renderSprites) {
-            vram.nameTableY = tempVram.nameTableY;
-            vram.coarseY = tempVram.coarseY;
-            vram.fineY = tempVram.fineY;
+            vramLoopy.nameTableY = tempVramLoopy.nameTableY;
+            vramLoopy.coarseY = tempVramLoopy.coarseY;
+            vramLoopy.fineY = tempVramLoopy.fineY;
         }
     }
 

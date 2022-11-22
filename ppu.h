@@ -124,8 +124,8 @@ private:
         u16 reg;
     };
     u8 fineX = 0x00;
-    LoopyReg vram;
-    LoopyReg tempVram;
+    LoopyReg vramLoopy;
+    LoopyReg tempVramLoopy;
 
     // TODO (Jon) remove unused variables
     u8 ppuOAMAddr;
@@ -156,7 +156,6 @@ private:
     u8 leftOrRight;
 
     void setCurrentShifter();
-    void updateShifters();
 
     struct ObjectAttributeMemory {
         u8 yPosition;
