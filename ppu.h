@@ -134,20 +134,26 @@ private:
     u8 ppuDATA; // Maybe not needed
     u8 ppuAddressLatch;
 
-    u16 scanline = 0;
+    int scanline = 0;
     u16 cycle = 0;
 
     // Background variables
+    // These are loaded in preparation of the next 8 cycles.
     u16 bgNextNametableValue = 0;
     u8 bgNextTileAttribute = 0;
     u8 bgPatternLSB = 0;
     u8 bgPatternMSB = 0;
 
-    // Shifters
-    u16 patternTableShifterHi = 0x00;
-    u16 patternTableShifterLow = 0x00;
-    u8 palleteShifterHi = 0x0;
-    u8 palleteShifterLow = 0x0;
+    // Shifters these are the current shifters
+    // These are used during the current 8 cycles
+    u16 patternTableShifterHi = 0x0000;
+    u16 patternTableShifterLow = 0x0000;
+    u16 palleteShifterHi = 0x00;
+    u16 palleteShifterLow = 0x00;
+
+    // Helpers for calculating what 2 bits of attribute table byte are needed
+    u8 topOrBottom;
+    u8 leftOrRight;
 
     void setCurrentShifter();
     void updateShifters();

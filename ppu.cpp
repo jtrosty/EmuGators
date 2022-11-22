@@ -2,7 +2,7 @@
 
 namespace NESEmulator {
 
-    PPU::PPU() {
+PPU::PPU() {
 
     }
 
@@ -315,9 +315,9 @@ namespace NESEmulator {
                     // 0000 0000 0000 0000
                     //   X---------------- Pattern table selector
                     //      XXXX XXXX----- This is the nametable value,This byte selects 1 of 256 different patters on the table
-                    //           XXXX XXXX the fine control called fine_y
+                    //                -XXX the fine control called fineY, only 3 bits, 0-7
                     bgPatternLSB = ppuReadVRAM((ppuControl.backgroundPatternTable << 12)
-                                               + ((u16)bgNametableValue << 4)
+                                               + ((u16)bgNextNametableValue << 4)
                                                + (vram.fineY) + 0x0000);
 
                     break;
@@ -327,7 +327,7 @@ namespace NESEmulator {
                 // Pattern Table MSB
                 case 6:
                     bgPatternMSB = ppuReadVRAM((ppuControl.backgroundPatternTable << 12)
-                                               + ((u16)bgNametableValue << 4)
+                                               + ((u16)bgNextNametableValue << 4)
                                                + (vram.fineY) + 0x0008);
                     break;
                 case 7:
@@ -385,8 +385,9 @@ namespace NESEmulator {
             // this pixel value gives you 0-4 and sets the color in the pallete
             u8 pixelColorValue = (lowerBit & 0x01) + ((higherBit & 0x01) << 1);
             // Now get the pallete that will be used
-            u8 palleteLowBit = bgTileAttribute & mask;
-            u8 palleteHighBit = bgTileAttribute & mask;
+
+            u8 palleteLowBit = palleteShifterLow & mask;
+            u8 palleteHighBit = palleteShifterHi & mask;
             u8 palleteValue = (palleteLowBit & 0x01) + ((palleteHighBit & 0x01) << 1);
 
             u32 pixelColor = colors[(ppuReadVRAM(paletteMemStart + pixelColorValue)) % numOfColors ];
@@ -396,6 +397,12 @@ namespace NESEmulator {
             int y = 0;
             if (scanline >= 0 && scanline < 240 && cycle < 256 ) {
                 setPixel(cycle, scanline,pixelColor);
+
+                // Shift bits after 1 cycle
+                patternTableShifterHi <<= 1;
+                patternTableShifterHi <<= 1;
+                palleteShifterHi <<= 1;
+                palleteShifterLow <<= 1;
             }
 
         }
@@ -408,6 +415,20 @@ namespace NESEmulator {
             }
         }
     }
+
+    void PPU::setCurrentShifter() {
+        // because it shifts 1 bit to the left everycycle, we gett the top byte and load the bottom byte
+        // with the Next byte NametableValue
+
+        patternTableShifterHi =  (patternTableShifterHi & 0xFF00) | bgNextNametableValue;
+        patternTableShifterLow =  (patternTableShifterLow & 0xFF00) | bgNextNametableValue;
+
+
+        // doing the same thing with the atribute shifters. ONly
+        palleteShifterHi =  (palleteShifterHi & 0xFF00) | bgNextTileAttribute;
+        palleteShifterLow =  (palleteShifterLow & 0xFF00) | bgNextTileAttribute;
+    }
+
 
     void PPU::setPixel(int x, int y, u32 color) {
         pixelData[(y * pixelWidth) + x] = color;
