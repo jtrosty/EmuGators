@@ -1,17 +1,18 @@
 #ifndef PPU_H
 #define PPU_H
+#include "device.h"
 #pragma once
 
 #include <stdio.h>
 #include <QByteArray>
+#include <QDebug>
 
 #include "defs.h"
 #include "bus.h"
 
 namespace NESEmulator {
 
-class PPU : public Device<PPU>
-{
+class PPU : public Device<PPU> {
 private:
     // The color palette
     //https://lospec.com/palette-list/nintendo-entertainment-system
@@ -63,8 +64,8 @@ private:
     u16 nameTableStart = 0x2000;
     u16 nameTableAttributeStart = 0x23C0;
     u16 paletteMemStart = 0x3F00;
-    u16 pixelWidth = 256;
-    u16 pixelHeight = 240;
+    u32 const pixelWidth = 256;
+    u32 pixelHeight = 240;
 
     // PPU registers
 
@@ -128,9 +129,8 @@ private:
     LoopyReg tempVramLoopy;
 
     // TODO (Jon) remove unused variables
-    u8 ppuOAMAddr;
-    u8 ppuSCROLL; // maybe
-    u16 ppuADDR;
+    //u8 ppuOAMAddr;
+    //u8 ppuSCROLL; // maybe
     u8 ppuDATA; // Maybe not needed
     u8 ppuAddressLatch;
 
@@ -191,7 +191,7 @@ private:
     void incrementY();
     void loopyTransferX();
     void loopyTransferY();
-    void setPixel(int x, int y, u32 color);
+    void setPixel(u32 x, u32 y, u32 color);
 
     u32 debug_patternTable[2][128 * 128]; // Each pattern table is 128 pixel wide and tall.
     void debug_patternTableToPixels(int patternTable, int x, int y);

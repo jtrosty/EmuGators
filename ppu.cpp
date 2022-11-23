@@ -25,7 +25,7 @@ PPU::PPU() {
         }
         case 0x0001: {
             ppuMask.reg = data;
-            //ppuMask.reg = 0x0F;
+            ppuMask.reg = 0x0F;
             break;
         }
         case 0x0002: {
@@ -36,7 +36,6 @@ PPU::PPU() {
             //OAM - Object Attribute Memory address
             // Wirte this looksl ike it is usally set to zero.
             //TODO: Figure this out.
-            ppuOAMAddr = 0;
 
             break;
         }
@@ -68,12 +67,11 @@ PPU::PPU() {
             // Write only
             // ppu addess, write only
             if (ppuAddressLatch == 1) {
-                tempVramLoopy.reg = (tempVram.reg & 0xFF00) | ppuDATA;
+                tempVramLoopy.reg = (tempVramLoopy.reg & 0xFF00) | data;
                 vramLoopy = tempVramLoopy;
                 ppuAddressLatch = 0;
             } else {
-                tempVramLoopy.reg = (tempVram.reg & 0x00FF) | (u16)(ppuDATA & 0x3F) << 8;
-                vramLoopy = tempVramLoopy;
+                tempVramLoopy.reg = (tempVramLoopy.reg & 0x00FF) | (u16)(data & 0x3F) << 8;
                 ppuAddressLatch = 1;
             }
             break;
@@ -116,11 +114,13 @@ PPU::PPU() {
 
         switch (index) {
         case 0x0000: {
-            result = ppuControl.reg;
+            // not readable
+            // result = ppuControl.reg;
             break;
         }
         case 0x0001: {
-            result = ppuMask.reg;
+            // Not read able
+            // result = ppuMask.reg;
             break;
         }
         case 0x0002: {
@@ -160,10 +160,10 @@ PPU::PPU() {
             // the load the ppuData with the next byte
             ppuDATA = ppuReadVRAM(vramLoopy.reg);
 
-            if (ppuADDR < 0x3F00) {
+            if (vramLoopy.reg < 0x3F00) {
                 // Nothing? delete
             }
-            else if (ppuADDR >= 0x3F00) {
+            else if (vramLoopy.reg >= 0x3F00) {
                 result = ppuDATA;
             }
             // Increment the nametable addressw
@@ -172,11 +172,11 @@ PPU::PPU() {
             // TODO: Need logic for if veritcal or horizontalmode
             if (true) {
                 // If vertical mode
-                ppuADDR += 32;
+                vramLoopy.reg += 32;
             }
             else {
                 // if horizontal mode
-                ppuADDR += 1;
+                vramLoopy.reg += 1;
             }
 
             break;
@@ -207,6 +207,15 @@ PPU::PPU() {
             vRam[i] = rom[chrRomStart + i];
         }
 
+        for (int i = 0x2000; i < 0x23FF; i++) {
+            qDebug() << i << ": 0x" << vRam[i] << " | ";
+        }
+        /*
+        for (int i = 0x3F00; i < 0x3F10; i++) {
+            qDebug() << i << ": 0x" << vRam[i] << " | ";
+        }
+        */
+
     }
 
     void PPU::debug_drawToScreen(QByteArray donkeyKong) {
@@ -232,16 +241,11 @@ PPU::PPU() {
             if (scanline == 0 && cycle == 0) {
                 cycle = 1;
             }
-
-            // Dummy scan line this is to fill the registers with data to being the visible scanlines
-            if(scanline == -1 || scanline == 261) {
-                if (scanline == -1 && cycle == 1) {
-                    // start a new frame
-                    ppuStatus.verticalBlank = 0;
-                }
-
+            if (scanline == -1 && cycle == 1) {
+                ppuStatus.verticalBlank = 0;
             }
-            if (cycle >= 1 && cycle < 258) {
+
+            if (cycle >= 2 && cycle < 258) {
 
                 // during visible seciton every 8 cycles updatessome variable to be used on the next cycle.
                 // 1 cycle per pixel
@@ -253,18 +257,18 @@ PPU::PPU() {
                     // This will set the currnet shifter which will be used below.
                     setCurrentShifter();
 
+                    // Load the bgNext name table for the following 8 cycles
+                    bgNextNametableValue = ppuReadVRAM(vramLoopy.reg);
+
+
+
+                    break;
+                case 2:
+
                     // this is the port of the prepatory phase and gets the next nametable tile.
                     // the address starts tt VRAM and then uses the LSB of vramLoopy.reg to get the correct byte.
                     // the 12 bytes are, course x (5 bits), and course y (5 bits), with the name table values as the MSBs.
-                    // each name table is 32 x 32.
-                    bgNextNametableValue = ppuReadVRAM(nameTableStart | vramLoopy.reg & 0x0FFF);
-                    break;
-                case 1:
-                    // Skip, it takes 2 cycles to perform the task in case 0
-                    break;
-                // AT Byte
-                case 2:
-                    // To get to the attribute, 12 bits total to get to the attribute
+                    // eac                   // To get to the attribute, 12 bits total to get to the attribute
                     // from NESDEV.org:
                     // NN 1111 YYY XXX
                     // || |||| ||| +++-- high 3 bits of coarse X (x/4)
@@ -275,17 +279,17 @@ PPU::PPU() {
                     // are reserved for assigning a specific palette to a part of the background.
                     // This section is called an attribute table.
                     //course x and y are divided by 4,(shifted 2) because
-                    bgNextTileAttribute = ppuReadVRAM(nameTableAttributeStart |
+                   bgNextTileAttribute = ppuReadVRAM(nameTableAttributeStart |
                                     vramLoopy.nameTableY << 11 					  |
                                     vramLoopy.nameTableX << 10   				  |
-                                    0b001111000000                            |
+                                    0b001111000000                                |
                                     vramLoopy.coarseX >> 2 						  |
                                     (vramLoopy.coarseY >> 2) << 3);
 
                     // TODO (Jon): I think there is more here
                     // Now we ahve bgNextTileAttribute, this bye of pallete data, covers a 4x4 block of
                     // 0b 11 01 10 00 <--- each 2 bits ared for a the TL, TR, BL, bR of a a group of 4x4 blocks.
-                    // find out if we are in TL, TR, BL, BR
+                   // find out if we are in TL, TR, BL, BR
                     topOrBottom = vramLoopy.coarseY % 4;
                     leftOrRight = vramLoopy.coarseX % 4;
                     if (topOrBottom < 2 ) { // we are on top
@@ -344,12 +348,13 @@ PPU::PPU() {
                 }
                 if (cycle == 257) {
                    //
+                    //setCurrentShifter();
                     loopyTransferX();
                 }
                 if (cycle == 338 || cycle == 340) {
                     // The case 1-8 repeats from above after 280, but no more pixels are displayed to
                     // The screen, this below does nothign
-                    ppuReadVRAM(nameTableStart | vramLoopy.reg & 0x0FFF);
+                    bgNextNametableValue =  ppuReadVRAM(nameTableStart | vramLoopy.reg & 0x0FFF);
                 }
                 if (scanline == -1 && cycle >= 280) {
                     // We have completed the row, in preperation for the next, perform
@@ -361,6 +366,7 @@ PPU::PPU() {
         if ( scanline == 240) {
             // Nothing happens, rendering is complete
         }
+
         if ( scanline >= 241 && scanline <= 260) {
             if (scanline == 241 && cycle ==1) {
                 // The frame is done.
@@ -368,7 +374,7 @@ PPU::PPU() {
                 // tell CPU tyhat rendering is complete
                 if (ppuControl.NMI) {
                     // Set NMI in RAM to true
-                    Bus::the().writeMemory(0xFFFA, 1);
+                    NESEmulator::Bus::the().writeMemory(0xFFFA, 1);
                 }
             }
         }
@@ -433,13 +439,12 @@ PPU::PPU() {
     }
 
 
-    void PPU::setPixel(int x, int y, u32 color) {
-        pixelData[(y * pixelWidth) + x] = color;
-        /*
+    void PPU::setPixel(u32 x, u32 y, u32 color) {
+        u32 index = (y * 256) + x;
+        pixelData[index] = color;
         for (int i = 0; i < 1000; i++) {
             pixelData[i] = 0xFF00FFFF;
         }
-        */
     }
 
     void PPU::incrementX() {
@@ -450,6 +455,7 @@ PPU::PPU() {
                 // If we get to the end, go back to the begining of the
                 // NEXT nametable
                 vramLoopy.coarseX = 0;
+                // The nametable bit flips to switch to the other nametable.
                 vramLoopy.nameTableX = ~vramLoopy.nameTableX;
             }
             else {
@@ -459,7 +465,7 @@ PPU::PPU() {
     }
 
     void PPU::incrementY() {
-        // Icrement fineY
+        // Icrement fineY
         if (vramLoopy.fineY < 7) {
             vramLoopy.fineY++;
         }
