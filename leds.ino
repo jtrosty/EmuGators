@@ -1,42 +1,30 @@
+#include <Adafruit_NeoPixel.h>
+#define PIN 11
+#define NUMPIXELS 30
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
-byte weatherMode;
-int cloudPos;
+int currentPixel = 0;
 void setup()
 {
-  weatherMode = 'x';
-  cloudPos = 0;
-  
-  for (int i = 2; i < 10; i++){
-    pinMode(i, OUTPUT);
-  }
-
+  pixels.begin();
   randomSeed(analogRead(0));
-  Serial.begin(9600);
+  Serial.begin(19200);
 
 }
 
 void loop()
 {
-  for (int i = 2; i < 10; i++){
-    digitalWrite(i, LOW);
-  }
+
+  byte red, green, blue;
   
-  if(Serial.available() > 0){
-    byte readIn = Serial.read();
-    if(readIn == '0' ||readIn == '1' || readIn =='2'){
-      weatherMode = readIn;
-    }
-  }
-  if(weatherMode == '1'){
-    digitalWrite(random(2,10), HIGH);
-    delay(100);
-  }
-  else if(weatherMode == '2'){
-    digitalWrite((cloudPos + 2), HIGH);
-    digitalWrite((cloudPos + 3 ), HIGH);
-    digitalWrite((cloudPos + 4), HIGH);
-    cloudPos = (cloudPos + 1) % 8;
-    delay(250);
+  if(Serial.available() > 2){
+    digitalWrite(5, HIGH);
+    red = Serial.read();
+    green = Serial.read();
+    blue = Serial.read();
+    pixels.setPixelColor(currentPixel % 30, pixels.Color(red, green, blue));
+    pixels.show();
+    currentPixel++;
   }
   
 

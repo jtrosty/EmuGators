@@ -82,6 +82,7 @@ void GLWidget::paintGL() {
     QImage img((const uchar *)(pixelData), width, height, bytesPerLine, QImage::Format_ARGB32);
 
     weather->addWeatherEffect(&img);
+    lights->mirrorScreen(&img);
 
     p.drawImage(rect(), img);
 

@@ -14,13 +14,13 @@ Window::Window()
     GLWidget* openGL = new GLWidget(this);
     openGL->weather = weather;
     QPushButton *button = new QPushButton(this);
-    button->setText("Push Me!");
+    button->setText("Change Weather");
     QLabel *weatherLabel = new QLabel(this);
     QObject::connect(weather, &WeatherManager::updated, weatherLabel, &QLabel::setText);
 
     LightManager *lights = new LightManager();
-    QObject::connect(button, SIGNAL(pressed()), lights, SLOT(setMode()));
-    //lights->setMode(1);
+    openGL->lights = lights;
+    QObject::connect(button, SIGNAL(pressed()), weather, SLOT(debug_cycleWeather()));
 
 
     QGridLayout* layout = new QGridLayout(this);
