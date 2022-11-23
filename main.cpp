@@ -6,6 +6,8 @@
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QTime>
+#include <QFuture>
+#include <QtConcurrent>
 #include "nesemulator.h"
 
 #define MATT_TEST 0
@@ -59,14 +61,16 @@ int main(int argc, char *argv[])
     bus.execLoop();
     bool running = true;
     Window w(pixels);
+    w.show();
 
-    while(running) {
-        a.processEvents();
-        bus.execLoop();
-        w.show();
-    }
-    a.exit();
+    auto func = [&] () {
+	while(running) {
+	    bus.execLoop();
+	    //a.processEvents();
+	}
+    };
+    QFuture<void> future = QtConcurrent::run(func);
     
-    return 0;
-    //return a.exec();
+    //return 0;
+    return a.exec();
 }

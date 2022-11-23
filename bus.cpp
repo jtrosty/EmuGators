@@ -12,6 +12,14 @@ void Bus::initialize(QByteArray romToLoad)
     memory = new u8[0xFFFF + 1] {0};
     mattCPUTestLoadROM(romToLoad);
 
+
+    // DEBUG memory and isntruciton code issues:
+    u16 startOfPrgRom = 16;
+    for (int i = 0; i < 0x3FFF; i++) {
+        debug_prgRom[i] = romToLoad.at(startOfPrgRom + i);
+    }
+
+
 }
 
 Bus::~Bus() {
@@ -79,29 +87,45 @@ void Bus::mattCPUTestLoadROM(QByteArray rom) {
     // printf("has trainer: %u\n", hasTrainer);
     unsigned cartridgeIndex = cartridgeROM;
     for (int i = 16; i < kib(16) + 16; i++, cartridgeIndex++) {
-        if (cartridgeROM + i >= 0xFFFA) {
+        if (cartridgeROM + i >= 0xFFFF) {
             qInfo("Rom load violated address Rom space");
         }
         memory[cartridgeIndex] = rom.at(i);
     }
     //printf("cartridge first load ends at %08x\n", cartridgeIndex);
     for (int i = 16; i < kib(16) + 16; i++, cartridgeIndex++) {
-        if (cartridgeROM + i >= 0xFFFA) {
+        if (cartridgeROM + i >= 0xFFFF) {
             qInfo("Rom load violated address Rom space");
         }
         memory[cartridgeIndex] = rom.at(i);
     }
+    u8 numOfRomBanks = romLoaded.at(4);
+    u8 numOfVramBlocks = romLoaded.at(5);
+    u8 is512Trainer = romLoaded.at(6) & 0b00000010;
+    u16 chrRomStart = 16;
+    if (is512Trainer) {
+        chrRomStart += 512;
+    }
+    chrRomStart += (0x4000 * numOfRomBanks);
+    NESEmulator::PPU::the().loadVram(rom, numOfVramBlocks, chrRomStart);
 }
 
 
 u8 Bus::readMemory(u16 addr) {
         // Ram Mirroring
+    /*
+    if (addr >= cartridgeROM && addr <= 0xFFFF) {
+        return romLoaded.at(addr & 0x3FFF);
+    }
+    */
     if ( addr < ramMirror) {
         addr = addr & ramMirror;
     }
         // PPU Mirroring
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
         addr = (addr & 0x0007) + ppuRegisterStart;
+        return NESEmulator::PPU::the().ppuReadRegister(addr);
+
     }
     else if (addr >= ppuIOStart && addr < apuControlIOStart) {
 
@@ -111,13 +135,19 @@ u8 Bus::readMemory(u16 addr) {
 	mControllerCache[addr & 1] <<= 1;
 	return data;
     }
+    if (addr >= cartridgeROM) {
+        addr = (addr & 0x3FFF);
+        return (debug_prgRom[addr]);//& 0x3FFF));
+    }
     return memory[addr];
 }
 
 u16 Bus::readMemory16Bits(u16 addr) {
     // lmao
-    u16 value = readMemory(addr);
-    return value | (readMemory(addr + 1) << 8);
+    u16 valueLo = readMemory(addr);
+    u16 valueHi = readMemory(addr + 1);
+    u16 result = valueLo | (valueHi << 8);
+    return result;
 }
 
 void Bus::writeMemory16Bits(u16 addr, u16 data) {
@@ -131,7 +161,8 @@ void Bus::writeMemory(u16 addr, u8 data) {
         addr = addr & 0x1FFF;
     }
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
-        addr = addr & ppuMirror;
+        addr = (addr & 0x0007) + ppuRegisterStart;
+        NESEmulator::PPU::the().ppuWriteRegister(addr, data);
     }
     else if (addr >= 0x4016 && addr <= 0x4017) {
 	mControllerCache[addr & 1] = mController[addr & 1];

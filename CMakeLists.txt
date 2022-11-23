@@ -17,6 +17,7 @@ find_package(Qt6 REQUIRED COMPONENTS OpenGLWidgets)
 find_package(Qt6 REQUIRED COMPONENTS Gui)
 find_package(Qt6 REQUIRED COMPONENTS Network)
 find_package(Qt6 REQUIRED COMPONENTS SerialPort)
+find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -72,6 +73,7 @@ target_link_libraries(Qt_Test PRIVATE Qt6::OpenGLWidgets)
 target_link_libraries(Qt_Test PRIVATE Qt6::Gui)
 target_link_libraries(Qt_Test PRIVATE Qt6::Network)
 target_link_libraries(Qt_Test PRIVATE Qt6::SerialPort)
+target_link_libraries(Qt_Test PRIVATE Qt6::Concurrent)
 
 set_target_properties(Qt_Test PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

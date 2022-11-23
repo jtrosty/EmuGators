@@ -25,6 +25,7 @@ namespace NESEmulator {
         }
         case 0x0001: {
             ppuMask.reg = data;
+            ppuMask.reg = 0x0F;
             break;
         }
         case 0x0002: {
@@ -51,6 +52,15 @@ namespace NESEmulator {
             // Typically written during vertical blanking. Change made during rendering wont take
             // affect till the next grame.
             // Write only
+            if (ppuAddressLatch == 1) {
+                tempVram.fineY = data & 0x07;
+                tempVram.coarseY = data >> 3;
+                ppuAddressLatch = 0;
+            } else {
+                fineX = data & 0x07;
+                tempVram.coarseX = data >> 3;
+                ppuAddressLatch = 1;
+            }
 
             break;
         }
@@ -58,6 +68,15 @@ namespace NESEmulator {
             // Write only
             // ppu addess, write only
             ppuADDR = data;
+            if (ppuAddressLatch == 1) {
+                tempVram.reg = (tempVram.reg & 0xFF00) | ppuDATA;
+                vram = tempVram;
+                ppuAddressLatch = 0;
+            } else {
+                tempVram.reg = (tempVram.reg & 0x00FF) | (u16)(ppuDATA & 0x3F) << 8;
+                vram = tempVram;
+                ppuAddressLatch = 1;
+            }
             break;
         }
         case 0x0007: {
@@ -67,13 +86,13 @@ namespace NESEmulator {
 
             // Depends on if in horizontal mode or veritcal mode.  Logic not yet yet
             // TODO: Need logic for if veritcal or horizontalmode
-            if (true) {
+            if (ppuControl.VramAddressIncrement) {
                 // If vertical mode
-                ppuADDR += 32;
+                vram.reg += 32;
             }
             else {
                 // if horizontal mode
-                ppuADDR += 1;
+                vram.reg += 1;
             }
 
             break;
@@ -106,7 +125,10 @@ namespace NESEmulator {
             break;
         }
         case 0x0002: {
-            result = ppuStatus.reg & 0xE0;
+            // ppuStatus.verticalBlank = 1;
+            ppuStatus.reg = 0xFF;
+            ppuDATA = 0xFF;
+            result = (ppuStatus.reg & 0xE0) | (ppuDATA & 0x1F);
 
             ppuStatus.verticalBlank = 0;
             ppuAddressLatch = 0;
@@ -314,7 +336,7 @@ namespace NESEmulator {
         if (ppuMask.renderBackground) {
             // Perform redner of background,
             // Only 1 bit is needed that correlates with 0-7 based on wehre int eh cycle we are.
-            u8 mask = 0x80 >> fineX;https://docs.google.com/document/d/1o9N4FHd5cBQrIEk_3XJsgFpvgkrLlJYZ4u9N1GTJgcc/edit
+            u8 mask = 0x80 >> fineX;  //https://docs.google.com/document/d/1o9N4FHd5cBQrIEk_3XJsgFpvgkrLlJYZ4u9N1GTJgcc/edit
             // Shift bits 1, 1 bit per pixel
             bgPatternLSB <<= 1;
             bgPatternMSB <<= 1;
@@ -351,10 +373,21 @@ namespace NESEmulator {
                         int y = (spriteY * 8 + row);
                         */
         }
+        cycle++;
+        if (cycle >=341) {
+            cycle = 0;
+            scanline++;
+            if (scanline >= 261) {
+                scanline = -1;
+            }
+        }
     }
 
     void PPU::setPixel(int x, int y, u32 color) {
         pixelData[(y * pixelWidth) + x] = color;
+        for (int i = 0; i < 1000; i++) {
+            pixelData[i] = 0xFFFFFFFF;
+        }
     }
 
     void PPU::incrementX() {
