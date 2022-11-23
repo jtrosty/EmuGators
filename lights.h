@@ -20,13 +20,13 @@ class LightManager : public QObject {
 
     int vid = 9025;
     int pid = 67;
+    int numLeds = 30;
 
 public:
     LightManager();
 
 public slots:
-    void setMode(int mode);
-    void setMode();
+    void mirrorScreen(QImage* screen);
 };
 
 

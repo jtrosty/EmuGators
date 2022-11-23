@@ -23,7 +23,7 @@ LightManager::LightManager(){
         if(!uno->open(QSerialPort::WriteOnly)){
             qDebug() << uno->error();
         }
-        uno->setBaudRate(QSerialPort::Baud9600);
+        uno->setBaudRate(QSerialPort::Baud19200);
         uno->setDataTerminalReady(true);
         uno->setDataBits(QSerialPort::Data8);
         uno->setParity(QSerialPort::NoParity);
@@ -37,35 +37,40 @@ LightManager::LightManager(){
 }
 
 
-void LightManager::setMode(int mode){
-    if(uno->isWritable()){
-        switch(mode){
-            case 0:
-                uno->write(QString('0').toStdString().c_str());
-                uno->flush();
-                break;
-            case 1:
-                uno->write(QString('1').toStdString().c_str());
-                uno->flush();
-                break;
-            case 2:
-                uno->write(QString('2').toStdString().c_str());
-                uno->flush();
-                break;
+void LightManager::mirrorScreen(QImage* img){
+    QDataStream writeStream(uno);
+    int ledWidth = img->width() / numLeds;
+    QVector<int> redAvg(numLeds, 0);
+    QVector<int> greenAvg(numLeds, 0);
+    QVector<int> blueAvg(numLeds, 0);
+    QVector<int> n(numLeds, 0);
 
 
+    //get sum of squares of RBG values
+    for(int y = 0; y < img->height(); y++){
+        QRgb* line = reinterpret_cast<QRgb*>(img->scanLine(y));
+        int avgIndex = 0;
+        for(int x = 0; x < img->width(); x += ledWidth){
+            for(int i = 0; i < ledWidth && i+x < img->width(); i++){
+                QRgb &rgb = line[x + i];
+                redAvg[avgIndex] += qRed(rgb)^2;
+                greenAvg[avgIndex] += qGreen(rgb)^2;
+                blueAvg[avgIndex] += qBlue(rgb)^2;
+                n[avgIndex]++;
+            }
+            if(avgIndex + 1 < numLeds)
+                avgIndex++;
         }
     }
-    else{
-        qDebug() << "Couldn't write to serial!";
+    //average out and write
+    for(int i = 0; i < numLeds; i++){
+        int tempRed = sqrt(redAvg[i] / n[i]);
+        int tempGreen = sqrt(greenAvg[i] / n[i]);
+        int tempBlue = sqrt(blueAvg[i] / n[i]);
+        writeStream << (quint8)tempRed;
+        writeStream << (quint8)tempGreen;
+        writeStream << (quint8)tempBlue;
     }
-}
-void LightManager::setMode(){
-    if(uno->isWritable()){
-        uno->write(QString('2').toStdString().c_str());
-        //uno->flush();
-    }
-    else{
-        qDebug() << "Couldn't write to serial!";
-    }
+
+
 }

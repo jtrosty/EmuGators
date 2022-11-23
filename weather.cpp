@@ -21,9 +21,11 @@ void WeatherManager::requestData(){
 }
 
 void WeatherManager::updateWeatherEffect(){
-    currentWeather = "Rain";
-    emit updated(currentWeather);
-    if(weatherTargets.empty()){
+    if(weatherTargets.empty() || weatherChanged){
+        if(weatherChanged){
+            weatherChanged = false;
+            weatherTargets.clear();
+        }
         if(currentWeather == "Clouds"){
             for(int i = 0; i < 6; i++){
                 double randomFactor1 = QRandomGenerator::global()->generateDouble();
@@ -115,5 +117,22 @@ void WeatherManager::addWeatherEffect(QImage* img){
         painter.drawImage(target, weatherSprite);
     }
 
+}
 
+void WeatherManager::debug_cycleWeather(){
+    if(currentWeather == "Clear"){
+        currentWeather = "Clouds";
+    }
+    else if(currentWeather == "Clouds"){
+        currentWeather = "Rain";
+    }
+    else if(currentWeather == "Rain"){
+        currentWeather = "Clear";
+    }
+    else{
+        currentWeather = "Clear";
+    }
+    weatherChanged = true;
+
+    emit updated(currentWeather);
 }
