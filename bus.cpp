@@ -109,7 +109,7 @@ void Bus::mattCPUTestLoadROM(QByteArray rom) {
     }
     chrRomStart += (0x4000 * numOfRomBanks);
     // Set mirroring
-    if ((rom.at(4) & 0x01) == 1) {
+    if ((rom.at(6) & 0x01) == 1) {
         PPU::the().setMirroring(1);
     }
     else {

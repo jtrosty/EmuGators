@@ -337,7 +337,7 @@ PPU::PPU() {
 
             if ((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338)) {
 
-                if (ppuMask.renderBackground || ppuMask.renderSprites) {
+                if (ppuMask.renderBackground) {
                     // Shift bits after 1 cycle
                     patternTableShifterHi <<= 1;
                     patternTableShifterLow <<= 1;
@@ -459,9 +459,6 @@ PPU::PPU() {
                 }
             }
         }
-        else if ( scanline == 240) {
-            // Nothing happens, rendering is complete
-        }
 
         else if ( scanline >= 241 && scanline <= 260) {
             if (scanline == 241 && cycle == 1) {
@@ -474,6 +471,7 @@ PPU::PPU() {
                 }
             }
         }
+
         u16 colorAddress = 0x3F00;
         u32 pixelColor = 0x00000000;
         if (ppuMask.renderBackground) {
@@ -507,6 +505,7 @@ PPU::PPU() {
         if (scanline >= 0 && scanline < 240 && cycle < 256 ) {
             setPixel(cycle - 1, scanline, pixelColor);
         }
+        //setPixel(cycle - 1, scanline, pixelColor);
 
 
         cycle++;
