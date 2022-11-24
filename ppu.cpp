@@ -2,6 +2,8 @@
 
 namespace NESEmulator {
 
+#define PRINT_NT_Palette 0
+
 PPU::PPU() {
 
     }
@@ -190,15 +192,35 @@ PPU::PPU() {
     }
 
     void PPU::ppuWriteVRAM(u16 address, u8 data) {
+        // Name table space
         if (address >= 0x2000 && address <= 0x2EFF) {
-            // Name table 1
-            if ((address >= 0x2000 && address <= 0x23FF) ||
-                 (address >= 0x2800 && address <= 0x2BFF)) {
-                address = 0x2000 + (address & 0x0FFF);
+            //vertical
+            if (mirroring == 1) {
+                // Name table 0 and table 2, map to table 0
+                if ((address >= 0x2000 && address <= 0x23FF) ||
+                    (address >= 0x2800 && address <= 0x2BFF)) {
+
+                    address = 0x2000 + (address & 0x0FFF);
+                }
+                // Name table 1 and 3 mapped onto trable 1
+                else if ((address >= 0x2400 && address <= 0x27FF) ||
+                        (address >= 0x2C00 && address <= 0x2FFF)) {
+                    address = 0x2400 + (address & 0x0FFF);
+                }
             }
-            if ((address >= 0x2400 && address <= 0x27FF) ||
-                 (address >= 0x2C00 && address <= 0x2FFF)) {
-                address = 0x27FF + (address & 0x0FFF);
+            // Horizontal
+            else if (mirroring == 0) {
+                // Name table 0 and table 1, map to table 0
+                if ((address >= 0x2000 && address <= 0x23FF) ||
+                    (address >= 0x2400 && address <= 0x27FF)) {
+
+                    address = 0x2000 + (address & 0x0FFF);
+                }
+                // Name table 2 and 3 mapped onto trable 2
+                else if ((address >= 0x2800 && address <= 0x2BFF) ||
+                        (address >= 0x2C00 && address <= 0x2FFF)) {
+                    address = 0x2800 + (address & 0x0FFF);
+                }
             }
         }
         vRam[address] = data;
@@ -214,9 +236,6 @@ PPU::PPU() {
                 address = 0x2400 + (address & 0x03FF);
             }
         }
-        */
-
-    u8 PPU::ppuReadVRAM(u16 address) {
         if (address >= 0x2000 && address <= 0x2EFF) {
             // Name table 1
             if ((address >= 0x2000 && address <= 0x23FF) ||
@@ -226,6 +245,39 @@ PPU::PPU() {
             if ((address >= 0x2400 && address <= 0x27FF) ||
                  (address >= 0x2C00 && address <= 0x2FFF)) {
                 address = 0x27FF + (address & 0x0FFF);
+            }
+        }
+        */
+
+    u8 PPU::ppuReadVRAM(u16 address) {
+        if (address >= 0x2000 && address <= 0x2EFF) {
+            //vertical
+            if (mirroring == 1) {
+                // Name table 0 and table 2, map to table 0
+                if ((address >= 0x2000 && address <= 0x23FF) ||
+                    (address >= 0x2800 && address <= 0x2BFF)) {
+
+                    address = 0x2000 + (address & 0x0FFF);
+                }
+                // Name table 1 and 3 mapped onto trable 1
+                else if ((address >= 0x2400 && address <= 0x27FF) ||
+                        (address >= 0x2C00 && address <= 0x2FFF)) {
+                    address = 0x2400 + (address & 0x0FFF);
+                }
+            }
+            // Horizontal
+            else if (mirroring == 0) {
+                // Name table 0 and table 1, map to table 0
+                if ((address >= 0x2000 && address <= 0x23FF) ||
+                    (address >= 0x2400 && address <= 0x27FF)) {
+
+                    address = 0x2000 + (address & 0x0FFF);
+                }
+                // Name table 2 and 3 mapped onto trable 2
+                else if ((address >= 0x2800 && address <= 0x2BFF) ||
+                        (address >= 0x2C00 && address <= 0x2FFF)) {
+                    address = 0x2800 + (address & 0x0FFF);
+                }
             }
         }
         return vRam[address];
@@ -460,12 +512,16 @@ PPU::PPU() {
             scanline++;
             if (scanline >= 261) {
                 scanline = -1;
+
+#if PRINT_NT_PALETTE
                 for (int i = 0x2000; i < 0x23FF; i++) {
                     qDebug() << i << ": 0x" << vRam[i] << " | ";
                 }
                 qDebug() << "Palette ##########################################";
                 for (int i = 0x3f00; i < 0x3f10; i++) {
-                    qDebug() << i << ": 0x" << vRam[i] << " | "; }
+                    qDebug() << i << ": 0x" << vRam[i] << " | ";
+                }
+#endif
             }
         }
     }
