@@ -127,10 +127,10 @@ PPU::PPU() {
             break;
         }
         case 0x0002: {
-            // ppuStatus.verticalBlank = 1;
+            //ppuStatus.verticalBlank = 1;
             //ppuStatus.reg = 0xFF;
             //ppuDATA = 0xFF;
-            result = (ppuStatus.reg & 0b11100000) | (ppuDATA & 0x00011111);
+            result = (ppuStatus.reg & 0b11100000); //| (ppuDATA & 0x00011111);
 
             ppuStatus.verticalBlank = 0;
             ppuAddressLatch = 0;
@@ -186,6 +186,7 @@ PPU::PPU() {
         }
         default: {
             printf("Accessed read ppu registers, but got default. Index value %i", index);
+            break;
         }
         }
         return result;
@@ -250,6 +251,7 @@ PPU::PPU() {
         */
 
     u8 PPU::ppuReadVRAM(u16 address) {
+        u8 result = 0x00;
         if (address >= 0x2000 && address <= 0x2EFF) {
             //vertical
             if (mirroring == 1) {
@@ -280,7 +282,8 @@ PPU::PPU() {
                 }
             }
         }
-        return vRam[address];
+        result = vRam[address];
+        return result;
     }
 
     u8 PPU::getPalette(u16 address) {
@@ -297,9 +300,11 @@ PPU::PPU() {
             vRam[i] = 5;
         }
 
+#if PRINT_NT_Palette
         for (int i = 0x0000; i < 0x23FF; i++) {
             qDebug() << i << ": 0x" << vRam[i] << " | ";
         }
+#endif
 
     }
 
@@ -418,7 +423,6 @@ PPU::PPU() {
                     bgPatternLSB = ppuReadVRAM((ppuControl.backgroundPatternTable << 12)
                                                + ((u16)bgNextNametableValue << 4)
                                                + vramLoopy.fineY + 0x0000);
-
                     break;
                 case 5:
                     // Skip, it takes 2 cycles to perform the task above
@@ -434,7 +438,6 @@ PPU::PPU() {
                     incrementX();
                     break;
                 }
-
 
                 if (cycle == 256) {
                     // Got to next scanline
@@ -456,12 +459,12 @@ PPU::PPU() {
                 }
             }
         }
-        if ( scanline == 240) {
+        else if ( scanline == 240) {
             // Nothing happens, rendering is complete
         }
 
-        if ( scanline >= 241 && scanline <= 260) {
-            if (scanline == 241 && cycle ==1) {
+        else if ( scanline >= 241 && scanline <= 260) {
+            if (scanline == 241 && cycle == 1) {
                 // The frame is done.
                 ppuStatus.verticalBlank = 1;
                 // tell CPU tyhat rendering is complete
@@ -471,18 +474,18 @@ PPU::PPU() {
                 }
             }
         }
-        u16 colorAddress = 0x0000;
+        u16 colorAddress = 0x3F00;
         u32 pixelColor = 0x00000000;
         if (ppuMask.renderBackground) {
             // Perform redner of background,
             // Only 1 bit is needed that correlates with 0-7 based on wehre int eh cycle we are.
-            u16 mask = 0x80 >> fineX;  //https://docs.google.com/document/d/1o9N4FHd5cBQrIEk_3XJsgFpvgkrLlJYZ4u9N1GTJgcc/edit
+            u16 mask = 0x8000 >> fineX;  //https://docs.google.com/document/d/1o9N4FHd5cBQrIEk_3XJsgFpvgkrLlJYZ4u9N1GTJgcc/edit
             // Shift bits 1, 1 bit per pixel
             //bgPatternLSB <<= 1;
             //bgPatternMSB <<= 1;
 
-            u8 lowerBit = patternTableShifterHi & mask;
-            u8 higherBit = patternTableShifterLow & mask;
+            u16 lowerBit = patternTableShifterHi & mask;
+            u16 higherBit = patternTableShifterLow & mask;
             // Only need to knwo if the value is 1 or 0.
             if (lowerBit > 0) lowerBit = 0x01;
             if (higherBit > 0) higherBit = 0x01;
@@ -490,13 +493,13 @@ PPU::PPU() {
             u8 pixelColorValue = (lowerBit & 0x01) | ((higherBit & 0x01) << 1);
             // Now get the pallete that will be used
 
-            u8 palleteLowBit = palleteShifterLow & mask;
-            u8 palleteHighBit = palleteShifterHi & mask;
+            u16 palleteLowBit = palleteShifterLow & mask;
+            u16 palleteHighBit = palleteShifterHi & mask;
             if (palleteLowBit > 0) palleteLowBit = 0x01;
             if (palleteHighBit > 0) palleteHighBit = (0x01 << 1);
             u8 palleteValue = palleteLowBit | palleteHighBit ;
 
-            colorAddress = (ppuReadVRAM(paletteMemStart + (palleteValue * 4) + pixelColorValue)) % numOfColors;
+            colorAddress = (ppuReadVRAM(0x3F00 + (palleteValue * 4) + pixelColorValue)) % numOfColors;
             pixelColor = colors[colorAddress];
         }
 
