@@ -508,8 +508,7 @@ PPU::PPU() {
             // If we get too the end
             if (vramLoopy.coarseX >= 31) {
                 // If we get to the end, go back to the begining of the
-                // NEXT nametable
-                vramLoopy.coarseX = 0;
+                // NEXT nametable vramLoopy.coarseX = 0;
                 // The nametable bit flips to switch to the other nametable.
                 vramLoopy.nameTableX = ~vramLoopy.nameTableX;
             }
@@ -521,20 +520,22 @@ PPU::PPU() {
 
     void PPU::incrementY() {
         // Icrement fineY
-        if (vramLoopy.fineY < 7) {
-            vramLoopy.fineY++;
-        }
-        else {
-            vramLoopy.fineY = 0; // Reset fine y then reset coarse. flip table if scrolling.
-            if (vramLoopy.coarseY == 29) {
-                vramLoopy.coarseY = 0;
-                vramLoopy.nameTableY = ~vramLoopy.nameTableY;
-            }
-            else if (vramLoopy.coarseY >= 31) {
-                vramLoopy.coarseY = 0;
+        if (ppuMask.renderBackground || ppuMask.renderSprites) {
+            if (vramLoopy.fineY < 7) {
+                vramLoopy.fineY++;
             }
             else {
+                vramLoopy.fineY = 0; // Reset fine y then reset coarse. flip table if scrolling.
+                if (vramLoopy.coarseY == 29) {
+                vramLoopy.coarseY = 0;
+                vramLoopy.nameTableY = ~vramLoopy.nameTableY;
+                }
+                else if (vramLoopy.coarseY >= 31) {
+                vramLoopy.coarseY = 0;
+                }
+                else {
                 vramLoopy.coarseY++;
+                }
             }
         }
     }
