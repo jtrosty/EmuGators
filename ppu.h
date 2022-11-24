@@ -79,10 +79,10 @@ private:
             u8 spritePatternTable : 1;
             u8 backgroundPatternTable : 1;
             u8 spriteSize : 1;
-            u8 NMI : 1;
             u8 slave : 1;
+            u8 NMI : 1;
         };
-        u8 reg;
+        u8 reg = 0x0000;
     } ppuControl;
 
     union PPUMASK {
@@ -91,14 +91,14 @@ private:
             // The below is  bit table.
             u8 greyScale : 1;
             u8 backgroundLeft : 1;
-            u8 backgroundRight : 1;
+            u8 spritesLeft : 1;
             u8 renderBackground : 1;
             u8 renderSprites : 1;
             u8 emphasizeRed : 1;
             u8 emphasizeGreen : 1;
             u8 emphasizeBlue : 1;
         };
-        u8 reg;
+        u8 reg = 0x0000;
     } ppuMask;
 
     union PPUSTATUS {
@@ -110,7 +110,7 @@ private:
             u8 spriteZeroHit : 1;
             u8 verticalBlank : 1;
         };
-        u8 reg;
+        u8 reg = 0x0000;
     } ppuStatus;
 
     union LoopyReg {
@@ -122,7 +122,7 @@ private:
             u16 fineY : 3;
             u16 unused : 1;
         };
-        u16 reg;
+        u16 reg = 0x0000;
     };
     u8 fineX = 0x00;
     LoopyReg vramLoopy;
@@ -131,18 +131,18 @@ private:
     // TODO (Jon) remove unused variables
     //u8 ppuOAMAddr;
     //u8 ppuSCROLL; // maybe
-    u8 ppuDATA; // Maybe not needed
-    u8 ppuAddressLatch;
+    u8 ppuDATA = 0x0; // Maybe not needed
+    u8 ppuAddressLatch = 0x00;
 
     int scanline = 0;
     u16 cycle = 0;
 
     // Background variables
     // These are loaded in preparation of the next 8 cycles.
-    u16 bgNextNametableValue = 0;
-    u8 bgNextTileAttribute = 0;
-    u8 bgPatternLSB = 0;
-    u8 bgPatternMSB = 0;
+    u16 bgNextNametableValue = 0x0000;
+    u8 bgNextTileAttribute = 0x00;
+    u8 bgPatternLSB = 0x00;
+    u8 bgPatternMSB = 0x00;
 
     // Shifters these are the current shifters
     // These are used during the current 8 cycles
@@ -152,8 +152,11 @@ private:
     u16 palleteShifterLow = 0x00;
 
     // Helpers for calculating what 2 bits of attribute table byte are needed
-    u8 topOrBottom;
-    u8 leftOrRight;
+    u8 topOrBottom = 0x00;
+    u8 leftOrRight = 0x00;
+
+    u8 NMIFlag = 0;
+
 
     void setCurrentShifter();
 
@@ -168,6 +171,8 @@ private:
 public:
     PPU();
     ~PPU();
+    u8 getNMI() {return NMIFlag;};
+    void setNMItoZero() {NMIFlag = 0;};
     void renderNameTable();
     void initialize(u32* glPixelData);
     void executeLoop();

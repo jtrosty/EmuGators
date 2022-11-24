@@ -37,9 +37,10 @@ void Bus::execLoop() {
     }
 
     // NMI control
-    if (Bus::the().readMemory(addrNMI)) {
-        // TODO do stuff?? or is it already handled
-        //CPU::the().NMI();
+    if (PPU::the().getNMI() > 0) {
+        // Set NMI to false;
+        PPU::the().setNMItoZero();
+        CPU::the().NMI();
     }
     clockCycle++;
 }
