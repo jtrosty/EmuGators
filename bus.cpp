@@ -33,13 +33,14 @@ void Bus::execLoop() {
 
     // The CPU runs slowers and only goes once very 3 PPU cycles.
     if (clockCycle % 3 == 0) {
-        NESEmulator::CPU::the().step();
+        NESEmulator::CPU::the().step(1);
     }
 
     // NMI control
-    if (Bus::the().readMemory(addrNMI)) {
-        // TODO do stuff?? or is it already handled
-
+    if (PPU::the().getNMI() > 0) {
+        // Set NMI to false;
+        PPU::the().setNMItoZero();
+        CPU::the().NMI();
     }
     clockCycle++;
 }
@@ -123,9 +124,7 @@ u8 Bus::readMemory(u16 addr) {
     }
         // PPU Mirroring
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
-        addr = (addr & 0x0007) + ppuRegisterStart;
         return NESEmulator::PPU::the().ppuReadRegister(addr);
-
     }
     else if (addr >= ppuIOStart && addr < apuControlIOStart) {
 
@@ -161,7 +160,7 @@ void Bus::writeMemory(u16 addr, u8 data) {
         addr = addr & 0x1FFF;
     }
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
-        addr = (addr & 0x0007) + ppuRegisterStart;
+        addr = (addr & 0x0007);
         NESEmulator::PPU::the().ppuWriteRegister(addr, data);
     }
     else if (addr >= 0x4016 && addr <= 0x4017) {

@@ -4,7 +4,7 @@
 
 void NESEmulator::powerOn(RomLoader& romLoader)
 {
-    NESEmulator::Bus::the().initialize(romLoader.debug_getDonkeyKongRom());
+    NESEmulator::Bus::the().initialize(romLoader.nesROM());
     NESEmulator::CPU::the().reset();
 }
 

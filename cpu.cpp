@@ -3,7 +3,7 @@
 #include "cpu.h"
 
 #define TEST_ROM 0
-#define DEBUG 1
+#define DEBUG 0
 
 namespace NESEmulator {
 
