@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     const QStringList args = parser.positionalArguments();
     RomLoader* romLoader = new RomLoader();
 
+
     auto& bus = NESEmulator::Bus::the();
     auto& cpu = NESEmulator::CPU::the();
     auto& ppu = NESEmulator::PPU::the();

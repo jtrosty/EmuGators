@@ -295,6 +295,7 @@ PPU::PPU() {
 
     void PPU::loadVram(QByteArray rom, u8 num8kVram, u16 chrRomStart) {
         u32 chrRomSize = num8kVram * 0x2000;
+        u32 romSize = rom.size();
         for (int i = 0; i < chrRomSize; i++) {
             vRam[i] = rom[chrRomStart + i];
         }

@@ -18,8 +18,7 @@ void Bus::initialize(QByteArray romToLoad)
     for (int i = 0; i < 0x3FFF; i++) {
         debug_prgRom[i] = romToLoad.at(startOfPrgRom + i);
     }
-
-
+    pDMA = &memory[0x4014];
 }
 
 Bus::~Bus() {
@@ -132,9 +131,11 @@ void Bus::mattCPUTestLoadROM(QByteArray rom) {
         }
         memory[cartridgeIndex] = rom.at(i);
     }
-    u8 numOfRomBanks = romLoaded.at(4);
-    u8 numOfVramBlocks = romLoaded.at(5);
-    u8 is512Trainer = romLoaded.at(6) & 0b00000010;
+    u8 numOfRomBanks = (u8)rom.at(4);
+    numOfRomBanks = 1;
+    u8 numOfVramBlocks = (u8)rom.at(5);
+    numOfVramBlocks = 1;
+    u8 is512Trainer = rom.at(6) & 0b00000010;
     u16 chrRomStart = 16;
     if (is512Trainer) {
         chrRomStart += 512;

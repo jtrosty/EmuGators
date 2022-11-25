@@ -9,5 +9,9 @@
         <file>roms/color_test.nes</file>
         <file>roms/test_cpu_exec_space_apu.nes</file>
         <file>roms/test_cpu_exec_space_ppuio.nes</file>
+        <file>roms/PacMan.nes</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>roms/PacMan.nes</file>
     </qresource>
 </RCC>

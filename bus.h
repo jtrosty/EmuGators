@@ -90,7 +90,7 @@ public:
     u8 dmaAddr = 0x00;
     u8 perforDMA = false;
     u8 startTransferDMA = false;
-    u8* pDMA = (u8*)memory[0x4014];
+    u8* pDMA;// = (u8*)memory[0x4014];
 };
 
 }
