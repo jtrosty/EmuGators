@@ -19,12 +19,8 @@ Window::Window(u32* _pixelData)
     QObject::connect(weather, &WeatherManager::updated, weatherLabel, &QLabel::setText);
 
     LightManager *lights = new LightManager();
-<<<<<<< HEAD
-    QObject::connect(button, SIGNAL(pressed()), lights, SLOT(setMode()));
-=======
     openGL->lights = lights;
     QObject::connect(button, SIGNAL(pressed()), weather, SLOT(debug_cycleWeather()));
->>>>>>> gabe2
 
 
     QGridLayout* layout = new QGridLayout(this);

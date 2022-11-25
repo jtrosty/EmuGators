@@ -1,11 +1,8 @@
  #ifndef GLWIDGET_H
 #define GLWIDGET_H
 
-<<<<<<< HEAD
-=======
 #include "weather.h"
 #include "lights.h"
->>>>>>> gabe2
 #include <QWidget>
 #include <QOpenGLWidget>
 #include <QPainter>
