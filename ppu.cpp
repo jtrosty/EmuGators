@@ -2,7 +2,7 @@
 
 namespace NESEmulator {
 
-#define PRINT_NT_Palette 1
+#define PRINT_NT_Palette 0
 
     PPU::PPU() {
 
@@ -297,6 +297,10 @@ namespace NESEmulator {
         }
         else if (address >= 0x3F00 && address <= 0x3FFF) {
             address &= 0x001F;
+            if (address == 0x0004) address = 0x0000;
+            if (address == 0x0008) address = 0x0000;
+            if (address == 0x000C) address = 0x0000;
+            if (address == 0x0004) address = 0x0000;
             if (address == 0x0010) address = 0x0000;
             if (address == 0x0014) address = 0x0004;
             if (address == 0x0018) address = 0x0008;
@@ -504,8 +508,8 @@ namespace NESEmulator {
             //bgPatternLSB <<= 1;
             //bgPatternMSB <<= 1;
 
-            u16 lowerBit = patternTableShifterHi & mask;
-            u16 higherBit = patternTableShifterLow & mask;
+            u16 higherBit = patternTableShifterHi & mask;
+            u16 lowerBit = patternTableShifterLow & mask;
             // Only need to knwo if the value is 1 or 0.
             if (lowerBit > 0) lowerBit = 0x0001;
             if (higherBit > 0) higherBit = 0x0001;
@@ -538,9 +542,11 @@ namespace NESEmulator {
                 scanline = -1;
 
 #if PRINT_NT_PALETTE
-                for (int i = 0x2000; i < 0x23FF; i++) {
+                qDebug() << "nametable ##########################################";
+                for (int i = 0x2000; i < 0x2064; i++) {
                     qDebug() << i << ": 0x" << vRam[i] << " | ";
                 }
+                qDebug() << "nametable ##########################################";
                 qDebug() << "Palette ##########################################";
                 for (int i = 0x3f00; i < 0x3f10; i++) {
                     qDebug() << i << ": 0x" << vRam[i] << " | ";
@@ -548,6 +554,11 @@ namespace NESEmulator {
 #endif
             }
         }
+                /*
+                for (int i = 0x2000; i < 0x23FF; i++) {
+                    qDebug() << i << ": 0x" << vRam[i] << " | ";
+                }
+                */
     }
 
     void PPU::setCurrentShifter() {
@@ -560,13 +571,13 @@ namespace NESEmulator {
 
         // doing the same thing with the atribute shifters. ONly
         u8 whichPallete = 0x00;
-        if ((bgNextTileAttribute & 0x10) > 0) whichPallete = 0xFF;
+        if ((bgNextTileAttribute & 0b10) > 0) whichPallete = 0xFF;
         else 								  whichPallete = 0x00;
 
         palleteShifterHi =  (palleteShifterHi & 0xFF00) | whichPallete;
 
         whichPallete = 0x00;
-        if ((bgNextTileAttribute & 0x01) > 0) whichPallete = 0xFF;
+        if ((bgNextTileAttribute & 0b01) > 0) whichPallete = 0xFF;
         else 								  whichPallete = 0x00;
         palleteShifterLow =  (palleteShifterLow & 0xFF00) | whichPallete;
     }
@@ -586,7 +597,7 @@ namespace NESEmulator {
         // If rendering is activiated.
         if (ppuMask.renderBackground || ppuMask.renderSprites) {
             // If we get too the end
-            if (vramLoopy.coarseX >= 31) {
+            if (vramLoopy.coarseX == 31) {
                 vramLoopy.coarseX = 0;
                 // If we get to the end, go back to the begining of the
                 // NEXT nametable vramLoopy.coarseX = 0;
@@ -608,14 +619,14 @@ namespace NESEmulator {
             else {
                 vramLoopy.fineY = 0; // Reset fine y then reset coarse. flip table if scrolling.
                 if (vramLoopy.coarseY == 29) {
-                vramLoopy.coarseY = 0;
-                vramLoopy.nameTableY = ~vramLoopy.nameTableY;
+                    vramLoopy.coarseY = 0;
+                    vramLoopy.nameTableY = ~vramLoopy.nameTableY;
                 }
-                else if (vramLoopy.coarseY >= 31) {
-                vramLoopy.coarseY = 0;
+                else if (vramLoopy.coarseY == 31) {
+                    vramLoopy.coarseY = 0;
                 }
                 else {
-                vramLoopy.coarseY++;
+                    vramLoopy.coarseY++;
                 }
             }
         }
