@@ -130,6 +130,7 @@ private:
 
     int scanline = 0;
     u16 cycle = 0;
+    u8 mirroring = 2; // 2 for it didn't get set, 1 for veritcal, 0 for horizontal
 
     // Background variables
     // These are loaded in preparation of the next 8 cycles.
@@ -151,7 +152,6 @@ private:
 
     u8 NMIFlag = 0;
 
-
     void setCurrentShifter();
 
     struct ObjectAttributeMemory {
@@ -167,6 +167,8 @@ public:
     ~PPU();
     u8 getNMI() {return NMIFlag;};
     void setNMItoZero() {NMIFlag = 0;};
+    u8 getMirorring() { return mirroring; };
+    void setMirroring(u8 value) {mirroring = value; };
     void renderNameTable();
     void initialize(u32* glPixelData);
     void executeLoop();

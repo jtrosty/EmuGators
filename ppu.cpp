@@ -2,6 +2,8 @@
 
 namespace NESEmulator {
 
+#define PRINT_NT_Palette 0
+
 PPU::PPU() {
 
     }
@@ -125,10 +127,10 @@ PPU::PPU() {
             break;
         }
         case 0x0002: {
-            // ppuStatus.verticalBlank = 1;
+            //ppuStatus.verticalBlank = 1;
             //ppuStatus.reg = 0xFF;
             //ppuDATA = 0xFF;
-            result = (ppuStatus.reg & 0b11100000) | (ppuDATA & 0x00011111);
+            result = (ppuStatus.reg & 0b11100000); //| (ppuDATA & 0x00011111);
 
             ppuStatus.verticalBlank = 0;
             ppuAddressLatch = 0;
@@ -184,21 +186,42 @@ PPU::PPU() {
         }
         default: {
             printf("Accessed read ppu registers, but got default. Index value %i", index);
+            break;
         }
         }
         return result;
     }
 
     void PPU::ppuWriteVRAM(u16 address, u8 data) {
+        // Name table space
         if (address >= 0x2000 && address <= 0x2EFF) {
-            // Name table 1
-            if ((address >= 0x2000 && address <= 0x23FF) ||
-                 (address >= 0x2800 && address <= 0x2BFF)) {
-                address = 0x2000 + (address & 0x0FFF);
+            //vertical
+            if (mirroring == 1) {
+                // Name table 0 and table 2, map to table 0
+                if ((address >= 0x2000 && address <= 0x23FF) ||
+                    (address >= 0x2800 && address <= 0x2BFF)) {
+
+                    address = 0x2000 + (address & 0x0FFF);
+                }
+                // Name table 1 and 3 mapped onto trable 1
+                else if ((address >= 0x2400 && address <= 0x27FF) ||
+                        (address >= 0x2C00 && address <= 0x2FFF)) {
+                    address = 0x2400 + (address & 0x0FFF);
+                }
             }
-            if ((address >= 0x2400 && address <= 0x27FF) ||
-                 (address >= 0x2C00 && address <= 0x2FFF)) {
-                address = 0x27FF + (address & 0x0FFF);
+            // Horizontal
+            else if (mirroring == 0) {
+                // Name table 0 and table 1, map to table 0
+                if ((address >= 0x2000 && address <= 0x23FF) ||
+                    (address >= 0x2400 && address <= 0x27FF)) {
+
+                    address = 0x2000 + (address & 0x0FFF);
+                }
+                // Name table 2 and 3 mapped onto trable 2
+                else if ((address >= 0x2800 && address <= 0x2BFF) ||
+                        (address >= 0x2C00 && address <= 0x2FFF)) {
+                    address = 0x2800 + (address & 0x0FFF);
+                }
             }
         }
         vRam[address] = data;
@@ -214,9 +237,6 @@ PPU::PPU() {
                 address = 0x2400 + (address & 0x03FF);
             }
         }
-        */
-
-    u8 PPU::ppuReadVRAM(u16 address) {
         if (address >= 0x2000 && address <= 0x2EFF) {
             // Name table 1
             if ((address >= 0x2000 && address <= 0x23FF) ||
@@ -228,7 +248,42 @@ PPU::PPU() {
                 address = 0x27FF + (address & 0x0FFF);
             }
         }
-        return vRam[address];
+        */
+
+    u8 PPU::ppuReadVRAM(u16 address) {
+        u8 result = 0x00;
+        if (address >= 0x2000 && address <= 0x2EFF) {
+            //vertical
+            if (mirroring == 1) {
+                // Name table 0 and table 2, map to table 0
+                if ((address >= 0x2000 && address <= 0x23FF) ||
+                    (address >= 0x2800 && address <= 0x2BFF)) {
+
+                    address = 0x2000 + (address & 0x0FFF);
+                }
+                // Name table 1 and 3 mapped onto trable 1
+                else if ((address >= 0x2400 && address <= 0x27FF) ||
+                        (address >= 0x2C00 && address <= 0x2FFF)) {
+                    address = 0x2400 + (address & 0x0FFF);
+                }
+            }
+            // Horizontal
+            else if (mirroring == 0) {
+                // Name table 0 and table 1, map to table 0
+                if ((address >= 0x2000 && address <= 0x23FF) ||
+                    (address >= 0x2400 && address <= 0x27FF)) {
+
+                    address = 0x2000 + (address & 0x0FFF);
+                }
+                // Name table 2 and 3 mapped onto trable 2
+                else if ((address >= 0x2800 && address <= 0x2BFF) ||
+                        (address >= 0x2C00 && address <= 0x2FFF)) {
+                    address = 0x2800 + (address & 0x0FFF);
+                }
+            }
+        }
+        result = vRam[address];
+        return result;
     }
 
     u8 PPU::getPalette(u16 address) {
@@ -245,9 +300,11 @@ PPU::PPU() {
             vRam[i] = 5;
         }
 
+#if PRINT_NT_Palette
         for (int i = 0x0000; i < 0x23FF; i++) {
             qDebug() << i << ": 0x" << vRam[i] << " | ";
         }
+#endif
 
     }
 
@@ -280,7 +337,7 @@ PPU::PPU() {
 
             if ((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338)) {
 
-                if (ppuMask.renderBackground || ppuMask.renderSprites) {
+                if (ppuMask.renderBackground) {
                     // Shift bits after 1 cycle
                     patternTableShifterHi <<= 1;
                     patternTableShifterLow <<= 1;
@@ -366,7 +423,6 @@ PPU::PPU() {
                     bgPatternLSB = ppuReadVRAM((ppuControl.backgroundPatternTable << 12)
                                                + ((u16)bgNextNametableValue << 4)
                                                + vramLoopy.fineY + 0x0000);
-
                     break;
                 case 5:
                     // Skip, it takes 2 cycles to perform the task above
@@ -382,7 +438,6 @@ PPU::PPU() {
                     incrementX();
                     break;
                 }
-
 
                 if (cycle == 256) {
                     // Got to next scanline
@@ -404,12 +459,9 @@ PPU::PPU() {
                 }
             }
         }
-        if ( scanline == 240) {
-            // Nothing happens, rendering is complete
-        }
 
-        if ( scanline >= 241 && scanline <= 260) {
-            if (scanline == 241 && cycle ==1) {
+        else if ( scanline >= 241 && scanline <= 260) {
+            if (scanline == 241 && cycle == 1) {
                 // The frame is done.
                 ppuStatus.verticalBlank = 1;
                 // tell CPU tyhat rendering is complete
@@ -419,18 +471,19 @@ PPU::PPU() {
                 }
             }
         }
-        u16 colorAddress = 0x0000;
+
+        u16 colorAddress = 0x3F00;
         u32 pixelColor = 0x00000000;
         if (ppuMask.renderBackground) {
             // Perform redner of background,
             // Only 1 bit is needed that correlates with 0-7 based on wehre int eh cycle we are.
-            u16 mask = 0x80 >> fineX;  //https://docs.google.com/document/d/1o9N4FHd5cBQrIEk_3XJsgFpvgkrLlJYZ4u9N1GTJgcc/edit
+            u16 mask = 0x8000 >> fineX;  //https://docs.google.com/document/d/1o9N4FHd5cBQrIEk_3XJsgFpvgkrLlJYZ4u9N1GTJgcc/edit
             // Shift bits 1, 1 bit per pixel
             //bgPatternLSB <<= 1;
             //bgPatternMSB <<= 1;
 
-            u8 lowerBit = patternTableShifterHi & mask;
-            u8 higherBit = patternTableShifterLow & mask;
+            u16 lowerBit = patternTableShifterHi & mask;
+            u16 higherBit = patternTableShifterLow & mask;
             // Only need to knwo if the value is 1 or 0.
             if (lowerBit > 0) lowerBit = 0x01;
             if (higherBit > 0) higherBit = 0x01;
@@ -438,13 +491,13 @@ PPU::PPU() {
             u8 pixelColorValue = (lowerBit & 0x01) | ((higherBit & 0x01) << 1);
             // Now get the pallete that will be used
 
-            u8 palleteLowBit = palleteShifterLow & mask;
-            u8 palleteHighBit = palleteShifterHi & mask;
+            u16 palleteLowBit = palleteShifterLow & mask;
+            u16 palleteHighBit = palleteShifterHi & mask;
             if (palleteLowBit > 0) palleteLowBit = 0x01;
             if (palleteHighBit > 0) palleteHighBit = (0x01 << 1);
             u8 palleteValue = palleteLowBit | palleteHighBit ;
 
-            colorAddress = (ppuReadVRAM(paletteMemStart + (palleteValue * 4) + pixelColorValue)) % numOfColors;
+            colorAddress = (ppuReadVRAM(0x3F00 + (palleteValue * 4) + pixelColorValue)) % numOfColors;
             pixelColor = colors[colorAddress];
         }
 
@@ -452,6 +505,7 @@ PPU::PPU() {
         if (scanline >= 0 && scanline < 240 && cycle < 256 ) {
             setPixel(cycle - 1, scanline, pixelColor);
         }
+        //setPixel(cycle - 1, scanline, pixelColor);
 
 
         cycle++;
@@ -460,12 +514,16 @@ PPU::PPU() {
             scanline++;
             if (scanline >= 261) {
                 scanline = -1;
+
+#if PRINT_NT_PALETTE
                 for (int i = 0x2000; i < 0x23FF; i++) {
                     qDebug() << i << ": 0x" << vRam[i] << " | ";
                 }
                 qDebug() << "Palette ##########################################";
                 for (int i = 0x3f00; i < 0x3f10; i++) {
-                    qDebug() << i << ": 0x" << vRam[i] << " | "; }
+                    qDebug() << i << ": 0x" << vRam[i] << " | ";
+                }
+#endif
             }
         }
     }

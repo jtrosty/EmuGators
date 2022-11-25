@@ -108,6 +108,13 @@ void Bus::mattCPUTestLoadROM(QByteArray rom) {
         chrRomStart += 512;
     }
     chrRomStart += (0x4000 * numOfRomBanks);
+    // Set mirroring
+    if ((rom.at(6) & 0x01) == 1) {
+        PPU::the().setMirroring(1);
+    }
+    else {
+        PPU::the().setMirroring(0);
+    }
     NESEmulator::PPU::the().loadVram(rom, numOfVramBlocks, chrRomStart);
 }
 
