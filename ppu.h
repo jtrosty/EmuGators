@@ -43,7 +43,7 @@ private:
      * 0x2800- 0x2BFF - NameTable 2
      * 0x2C00- 0x2FFF - NameTable 3
      *
-     * 0x3F00 - 3F10 - Pallate table
+     * 0x3F00 - 3F1F - Pallate table
      * 0x3F00 is typically the background. 8 bit value and indexes
      * a specific color. Each
      * The first 4 palettes are for background
@@ -174,7 +174,7 @@ public:
     void renderNameTable();
     void initialize(u32* glPixelData);
     void executeLoop();
-    void loadVram(QByteArray rom, u8 num8kVram, u16 chrRomStart);
+    void loadVram(QByteArray &rom, u8 num8kVram, u16 chrRomStart);
 
     void debug_load_vRam();
     void debug_drawPatternTable(int patternTable);

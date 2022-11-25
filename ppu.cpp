@@ -2,7 +2,7 @@
 
 namespace NESEmulator {
 
-#define PRINT_NT_Palette 0
+#define PRINT_NT_Palette 1
 
 PPU::PPU() {
 
@@ -254,19 +254,22 @@ PPU::PPU() {
 
     u8 PPU::ppuReadVRAM(u16 address) {
         u8 result = 0x00;
-        if (address >= 0x2000 && address <= 0x2EFF) {
+        if (address >= 0x2000 && address < 0x3EFF) {
+            if (address >= 0x3000 && address <= 0x3EFF) {
+                address = 0x2000 + (address & 0x0FFF);
+            }
             //vertical
             if (mirroring == 1) {
                 // Name table 0 and table 2, map to table 0
                 if ((address >= 0x2000 && address <= 0x23FF) ||
                     (address >= 0x2800 && address <= 0x2BFF)) {
 
-                    address = 0x2000 + (address & 0x0FFF);
+                    address = 0x2000 + (address & 0x03FF);
                 }
                 // Name table 1 and 3 mapped onto trable 1
                 else if ((address >= 0x2400 && address <= 0x27FF) ||
                         (address >= 0x2C00 && address <= 0x2FFF)) {
-                    address = 0x2400 + (address & 0x0FFF);
+                    address = 0x2400 + (address & 0x03FF);
                 }
             }
             // Horizontal
@@ -275,13 +278,17 @@ PPU::PPU() {
                 if ((address >= 0x2000 && address <= 0x23FF) ||
                     (address >= 0x2400 && address <= 0x27FF)) {
 
-                    address = 0x2000 + (address & 0x0FFF);
+                    address = 0x2000 + (address & 0x03FF);
                 }
                 // Name table 2 and 3 mapped onto trable 2
                 else if ((address >= 0x2800 && address <= 0x2BFF) ||
                         (address >= 0x2C00 && address <= 0x2FFF)) {
-                    address = 0x2800 + (address & 0x0FFF);
+                    address = 0x2800 + (address & 0x03FF);
                 }
+            }
+            else if (address >= 0x3F00 && address <= 0x3FFF) {
+                address &= 0x001F;
+                address = 0x3F00 + address;
             }
         }
         result = vRam[address];
@@ -293,15 +300,17 @@ PPU::PPU() {
         return result;
     }
 
-    void PPU::loadVram(QByteArray rom, u8 num8kVram, u16 chrRomStart) {
+    void PPU::loadVram(QByteArray &rom, u8 num8kVram, u16 chrRomStart) {
         u32 chrRomSize = num8kVram * 0x2000;
         u32 romSize = rom.size();
         for (int i = 0; i < chrRomSize; i++) {
             vRam[i] = rom[chrRomStart + i];
         }
+        /*
         for (int i = 0x3F00; i < 0x3F10; i++) {
             vRam[i] = 5;
         }
+        */
 
 #if PRINT_NT_Palette
         for (int i = 0x0000; i < 0x23FF; i++) {
@@ -568,6 +577,7 @@ PPU::PPU() {
         if (ppuMask.renderBackground || ppuMask.renderSprites) {
             // If we get too the end
             if (vramLoopy.coarseX >= 31) {
+                vramLoopy.coarseX = 0;
                 // If we get to the end, go back to the begining of the
                 // NEXT nametable vramLoopy.coarseX = 0;
                 // The nametable bit flips to switch to the other nametable.

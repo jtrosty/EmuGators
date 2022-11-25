@@ -132,9 +132,9 @@ void Bus::mattCPUTestLoadROM(QByteArray rom) {
         memory[cartridgeIndex] = rom.at(i);
     }
     u8 numOfRomBanks = (u8)rom.at(4);
-    numOfRomBanks = 1;
+    //numOfRomBanks = 1;
     u8 numOfVramBlocks = (u8)rom.at(5);
-    numOfVramBlocks = 1;
+    //numOfVramBlocks = 1;
     u8 is512Trainer = rom.at(6) & 0b00000010;
     u16 chrRomStart = 16;
     if (is512Trainer) {
