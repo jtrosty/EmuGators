@@ -9,6 +9,8 @@
 
 #include "defs.h"
 #include "bus.h"
+#include "glwidget.h"
+#include "forward.h"
 
 namespace NESEmulator {
 
@@ -184,7 +186,7 @@ public:
     u8 getMirorring() { return mirroring; };
     void setMirroring(u8 value) {mirroring = value; };
     void renderNameTable();
-    void initialize(u32* glPixelData);
+    void initialize(u32* glPixelData, GLWidget&);
     void executeLoop();
     void loadVram(QByteArray &rom, u8 num8kVram, u16 chrRomStart);
 
@@ -214,7 +216,7 @@ private:
 
     u32 debug_patternTable[2][128 * 128]; // Each pattern table is 128 pixel wide and tall.
     void debug_patternTableToPixels(int patternTable, int x, int y);
-
+    GLWidget* mGLWidget { nullptr };
 };
 
 }

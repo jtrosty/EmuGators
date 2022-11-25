@@ -17,10 +17,11 @@ class Window : public QWidget
 
 public:
     Window(u32* _pixelData);
-
+    GLWidget& glWidget() { return *mGLWidget; }
 protected:
 
 private:
+    GLWidget* mGLWidget { nullptr };
 };
 
 #endif // WINDOW_H
