@@ -146,20 +146,22 @@ private:
     u16 palleteShifterHi = 0x00;
     u16 palleteShifterLow = 0x00;
 
+    void setCurrentShifter();
     // Helpers for calculating what 2 bits of attribute table byte are needed
     u8 topOrBottom = 0x00;
     u8 leftOrRight = 0x00;
 
     u8 NMIFlag = 0;
 
-    void setCurrentShifter();
+
 
     struct ObjectAttributeMemory {
         u8 yPosition;
-        u8 indexNumber;
+        u8 idPattern;
         u8 attribute;
         u8 xPosition;
-    } OAM[64];
+    } OAM[64] {0};
+
 
 
 public:
@@ -181,6 +183,10 @@ public:
     void debug_drawToScreen(QByteArray donkeyKong);
     void ppuWriteRegister(u16 address, u8 data);
     u8 ppuReadRegister(u16 address);
+
+    // OAM and Sprite rendering
+    u8 oamAddress = 0x00;
+    u8* pOAM = (u8*)OAM;
 
 private:
     void writeToBus(u16 address, u8 data);

@@ -38,6 +38,7 @@ PPU::PPU() {
             //OAM - Object Attribute Memory address
             // Wirte this looksl ike it is usally set to zero.
             //TODO: Figure this out.
+            oamAddress = data;
 
             break;
         }
@@ -45,6 +46,7 @@ PPU::PPU() {
             // Can be read in rare instances
             // OAM data
             // DO NOT WRITEE DIRECTLY TO THIS REGISTER IN MOST CASES PER NESDEV
+            pOAM[oamAddress] = data;
             break;
         }
         case 0x0005: {
@@ -140,11 +142,11 @@ PPU::PPU() {
         case 0x0003: {
             // Does not get read
             //OAM - Object Attribute Memory address
-            break;
         }
         case 0x0004: {
             // Can be read in rare instances
             // OAM data
+            result = pOAM[oamAddress];
             break;
         }
         case 0x0005: {
