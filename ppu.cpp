@@ -4,7 +4,7 @@ namespace NESEmulator {
 
 #define PRINT_NT_Palette 1
 
-PPU::PPU() {
+    PPU::PPU() {
 
     }
 
@@ -71,12 +71,12 @@ PPU::PPU() {
             // Write only
             // ppu addess, write only
             if (ppuAddressLatch == 1) {
-                tempVramLoopy.reg = (tempVramLoopy.reg & 0xFF00) | data;
+                tempVramLoopy.reg = (tempVramLoopy.reg & 0xFF00) | (u16)data;
                 vramLoopy = tempVramLoopy;
                 ppuAddressLatch = 0;
             }
             else if (ppuAddressLatch == 0) {
-                tempVramLoopy.reg = (tempVramLoopy.reg & 0x00FF) | ((u16)((data & 0x3F) << 8));
+                tempVramLoopy.reg = (tempVramLoopy.reg & 0x00FF) | (((u16)(data & 0x3F)) << 8);
                 ppuAddressLatch = 1;
             }
             break;
@@ -226,6 +226,14 @@ PPU::PPU() {
                 }
             }
         }
+        else if (address >= 0x3F00 && address <= 0x3FFF) {
+            address &= 0x001F;
+            if (address == 0x0010) address = 0x0000;
+            if (address == 0x0014) address = 0x0004;
+            if (address == 0x0018) address = 0x0008;
+            if (address == 0x001C) address = 0x000C;
+            address = 0x3F00 | address;
+        }
         vRam[address] = data;
     }
     /*
@@ -286,10 +294,14 @@ PPU::PPU() {
                     address = 0x2800 + (address & 0x03FF);
                 }
             }
-            else if (address >= 0x3F00 && address <= 0x3FFF) {
-                address &= 0x001F;
-                address = 0x3F00 + address;
-            }
+        }
+        else if (address >= 0x3F00 && address <= 0x3FFF) {
+            address &= 0x001F;
+            if (address == 0x0010) address = 0x0000;
+            if (address == 0x0014) address = 0x0004;
+            if (address == 0x0018) address = 0x0008;
+            if (address == 0x001C) address = 0x000C;
+            address = 0x3F00 | address;
         }
         result = vRam[address];
         return result;
@@ -337,6 +349,7 @@ PPU::PPU() {
     }
 
     void PPU::executeLoop() {
+        u16 localAddress = 0x0000;
         if (scanline >= -1 && scanline < 240) {
 
             // This cycle is skpped for scanline 0
@@ -368,7 +381,8 @@ PPU::PPU() {
                     setCurrentShifter();
 
                     // Load the bgNext name table for the following 8 cycles
-                    bgNextNametableValue = ppuReadVRAM(0x2000 | (vramLoopy.reg & 0x0FFF));
+                    localAddress = 0x2000 | (vramLoopy.reg & 0x0FFF);
+                    bgNextNametableValue = ppuReadVRAM(localAddress);
 
                     break;
                 case 2:
@@ -387,11 +401,9 @@ PPU::PPU() {
                     // are reserved for assigning a specific palette to a part of the background.
                     // This section is called an attribute table.
                     //course x and y are divided by 4,(shifted 2) because
-                   bgNextTileAttribute = ppuReadVRAM(0x23C0           |
-                                    (vramLoopy.nameTableY << 11) 	  |
-                                    (vramLoopy.nameTableX << 10)  	  |
-                                    (vramLoopy.coarseX >> 2) 		  |
-                                    ((vramLoopy.coarseY >> 2) << 3));
+                    localAddress = 0x23C0 | (vramLoopy.nameTableY << 11) | (vramLoopy.nameTableX << 10) |
+                                            (vramLoopy.coarseX >> 2) | ((vramLoopy.coarseY >> 2) << 3);
+                    bgNextTileAttribute = ppuReadVRAM(localAddress);
 
                                     //0b001111000000                                |
                     // TODO (Jon): I think there is more here
@@ -403,21 +415,21 @@ PPU::PPU() {
                     if (topOrBottom < 2 ) { // we are on top
                         if (leftOrRight < 2) { // We are on left
                             // TL
-                            bgNextTileAttribute = ((bgNextTileAttribute & 0b11000000) >> 6);
+                            bgNextTileAttribute = ((bgNextTileAttribute & 0b00000011));
                         }
                         else {
                             // TR
-                            bgNextTileAttribute = ((bgNextTileAttribute & 0b00110000) >> 4);
+                            bgNextTileAttribute = ((bgNextTileAttribute & 0b00001100) >> 2);
                         }
                     }
                     else {
                         if (leftOrRight < 2) { // We are on left
                             // BL
-                            bgNextTileAttribute = ((bgNextTileAttribute & 0b00001100) >> 2);
+                            bgNextTileAttribute = ((bgNextTileAttribute & 0b00110000) >> 4);
                         }
                         else {
                             // BR
-                            bgNextTileAttribute = ((bgNextTileAttribute & 0b00000011));
+                            bgNextTileAttribute = ((bgNextTileAttribute & 0b11000000) >> 6);
                         }
                     }
                     bgNextTileAttribute &= 0b00000011;
@@ -432,18 +444,16 @@ PPU::PPU() {
                     //    X ---- ---- ---- Pattern table selector
                     //      XXXX XXXX ---- This is the nametable value,This byte selects 1 of 256 different patters on the table
                     //                -XXX the fine control called fineY, only 3 bits, 0-7
-                    bgPatternLSB = ppuReadVRAM((ppuControl.backgroundPatternTable << 12)
-                                               + ((u16)bgNextNametableValue << 4)
-                                               + vramLoopy.fineY + 0x0000);
+                    localAddress = (ppuControl.backgroundPatternTable << 12) + ((u16)bgNextNametableValue << 4) + vramLoopy.fineY + 0x0000;
+                    bgPatternLSB = ppuReadVRAM(localAddress);
                     break;
                 case 5:
                     // Skip, it takes 2 cycles to perform the task above
                     break;
                 // Pattern Table MSB
                 case 6:
-                    bgPatternMSB = ppuReadVRAM((ppuControl.backgroundPatternTable << 12)
-                                               + ((u16)bgNextNametableValue << 4)
-                                               + vramLoopy.fineY + 0x0008);
+                    localAddress = (ppuControl.backgroundPatternTable << 12) + ((u16)bgNextNametableValue << 4)+ vramLoopy.fineY + 0x0008;
+                    bgPatternMSB = ppuReadVRAM(localAddress);
                     break;
                 case 7:
                     // Skip, it takes 2 cycles to perform the task above
@@ -462,7 +472,7 @@ PPU::PPU() {
                 if (cycle == 338 || cycle == 340) {
                     // The case 1-8 repeats from above after 280, but no more pixels are displayed to
                     // The screen, this below does nothign
-                    bgNextNametableValue =  ppuReadVRAM(0x2000 | vramLoopy.reg & 0x0FFF);
+                    bgNextNametableValue =  ppuReadVRAM(0x2000 | (vramLoopy.reg & 0x0FFF));
                 }
                 if (scanline == -1 && cycle >= 280 && cycle < 305) {
                     // We have completed the row, in preperation for the next, perform
@@ -485,7 +495,7 @@ PPU::PPU() {
         }
 
         u16 colorAddress = 0x3F00;
-        u32 pixelColor = 0x00000000;
+        u32 pixelColor = ppuReadVRAM(0x3F00);
         if (ppuMask.renderBackground) {
             // Perform redner of background,
             // Only 1 bit is needed that correlates with 0-7 based on wehre int eh cycle we are.
@@ -497,19 +507,19 @@ PPU::PPU() {
             u16 lowerBit = patternTableShifterHi & mask;
             u16 higherBit = patternTableShifterLow & mask;
             // Only need to knwo if the value is 1 or 0.
-            if (lowerBit > 0) lowerBit = 0x01;
-            if (higherBit > 0) higherBit = 0x01;
+            if (lowerBit > 0) lowerBit = 0x0001;
+            if (higherBit > 0) higherBit = 0x0001;
             // this pixel value gives you 0-4 and sets the color in the pallete
-            u8 pixelColorValue = (lowerBit & 0x01) | ((higherBit & 0x01) << 1);
+            u16 pixelColorValue = lowerBit  | (higherBit << 1);
             // Now get the pallete that will be used
 
             u16 palleteLowBit = palleteShifterLow & mask;
             u16 palleteHighBit = palleteShifterHi & mask;
             if (palleteLowBit > 0) palleteLowBit = 0x01;
             if (palleteHighBit > 0) palleteHighBit = (0x01 << 1);
-            u8 palleteValue = palleteLowBit | palleteHighBit ;
+            u16 palleteValue = palleteLowBit | palleteHighBit;
 
-            colorAddress = (ppuReadVRAM(0x3F00 + (palleteValue * 4) + pixelColorValue)) % numOfColors;
+            colorAddress = (ppuReadVRAM(0x3F00 + (palleteValue << 2) + pixelColorValue)) & 0x3F; //% 63;
             pixelColor = colors[colorAddress];
         }
 
