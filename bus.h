@@ -54,6 +54,8 @@ class Bus : public Device<Bus>
     u8 mController[2] { 0 };
     u8 mControllerCache[2] { 0 };
     u16 pcStartAddress = 0xFFFC;
+    u8 performDMA = false;
+    u8 dataDMA = 0x00;
 
     u32 clockCycle = 0;
     u16 addrNMI = 0xFFFA;
@@ -83,10 +85,12 @@ public:
     void writeMemory16Bits(u16 addr, u16 data);
 
     /*
-     *
      * PPU stuff will go here.
-     *
      */
+    u8 dmaAddr = 0x00;
+    u8 perforDMA = false;
+    u8 startTransferDMA = false;
+    u8* pDMA;// = (u8*)memory[0x4014];
 };
 
 }
