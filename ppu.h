@@ -202,7 +202,9 @@ public:
     u8 oamAddress = 0x00;
     u8* pOAM = (u8*)OAM;
 
+
 private:
+    void drawSprites();
     void writeToBus(u16 address, u8 data);
     u8 readFromBus(u16 address);
     void ppuWriteVRAM(u16 address, u8 data);

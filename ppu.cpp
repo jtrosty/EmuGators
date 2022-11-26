@@ -301,13 +301,13 @@ namespace NESEmulator {
         else if (address >= 0x3F00 && address <= 0x3FFF) {
             address &= 0x001F;
             if (address == 0x0004) address = 0x0000;
-            if (address == 0x0008) address = 0x0000;
-            if (address == 0x000C) address = 0x0000;
-            if (address == 0x0004) address = 0x0000;
-            if (address == 0x0010) address = 0x0000;
-            if (address == 0x0014) address = 0x0004;
-            if (address == 0x0018) address = 0x0008;
-            if (address == 0x001C) address = 0x000C;
+            else if (address == 0x0008) address = 0x0000;
+            else if (address == 0x000C) address = 0x0000;
+            else if (address == 0x0004) address = 0x0000;
+            else if (address == 0x0010) address = 0x0000;
+            else if (address == 0x0014) address = 0x0000;
+            else if (address == 0x0018) address = 0x0000;
+            else if (address == 0x001C) address = 0x0000;
             address = 0x3F00 | address;
         }
         result = vRam[address];
@@ -492,6 +492,7 @@ namespace NESEmulator {
         else if ( scanline >= 241 && scanline <= 260) {
             if (scanline == 241 && cycle == 1) {
                 // The frame is done.
+                drawSprites();
                 ppuStatus.verticalBlank = 1;
 		mGLWidget->update();
                 // tell CPU tyhat rendering is complete
@@ -563,6 +564,56 @@ namespace NESEmulator {
                     qDebug() << i << ": 0x" << vRam[i] << " | ";
                 }
                 */
+    }
+
+    void PPU::drawSprites() {
+        // Go through OAM and
+        u8 spriteLSB = 0x00;
+        u8 spriteMSB = 0x00;
+
+        for (int i = 0; i < 64; i++) {
+            if (OAM[i].attribute != 0) {
+                u16 spriteOffset = OAM[i].idPattern << 4;
+                u16 pallete = OAM[i].attribute & 0x03; // just ened the first 2 bytes
+                u8 flipHorizontally = OAM[i].attribute & 0b01000000;
+                u8 flipVertically = OAM[i].attribute & 0b10000000;
+                // Draw
+                for (u8 spriteRow = 0; spriteRow < 8; spriteRow++) {
+                    // Address for sprite it chr rom
+                    // XXXX
+                    // 1--- From ppuControl.spritePattern Table
+                    //  11- Sprite ID, start of sprite
+                    //    1 The 16 bytes in for each chr rom, assume 8x8 sprites
+
+                    spriteLSB = ppuReadVRAM((0x1000) + spriteOffset + spriteRow + 0x0000);
+                    spriteMSB = ppuReadVRAM((0x1000) + spriteOffset + spriteRow + 0x0008);
+                    for (u8 spriteCol = 0; spriteCol < 8; spriteCol++) {
+                        // Get color
+                        u8 pixelColorValue = (spriteLSB & 0x01) + ((spriteMSB & 0x01) << 1);
+                        u8 colorAddress = (ppuReadVRAM(0x3F10 + (pallete << 2) + pixelColorValue)) & 0x3F;
+                        int x, y;
+                        if (flipHorizontally > 0) {
+                            x = OAM[i].xPosition + (spriteCol);
+
+                        }
+                        else {
+                            x = OAM[i].xPosition + (7 - spriteCol);
+
+                        }
+                        if (flipVertically > 0) {
+                            y = OAM[i].yPosition + (7 - spriteRow);
+                        }
+                        else {
+                            y = OAM[i].yPosition + spriteRow;
+                        }
+                        setPixel(x, y, colors[colorAddress]);
+
+                        spriteLSB >>= 1;
+                        spriteMSB >>= 1;
+                    }
+                }
+            }
+        }
     }
 
     void PPU::setCurrentShifter() {

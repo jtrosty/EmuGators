@@ -34,4 +34,5 @@ Window::Window(u32* _pixelData)
     layout->addWidget(weatherLabel, 1, 1);
     setLayout(layout);
 
+
 }
