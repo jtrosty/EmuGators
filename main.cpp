@@ -67,8 +67,6 @@ int main(int argc, char *argv[])
     auto func = [&] () {
 	while(running) {
 	    bus.execLoop();
-	    w.update();
-	    //a.processEvents();
 	}
     };
     QFuture<void> future = QtConcurrent::run(func);
