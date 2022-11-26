@@ -1,4 +1,5 @@
 #include "ppu.h"
+#include "glwidget.h"
 
 namespace NESEmulator {
 
@@ -8,8 +9,10 @@ namespace NESEmulator {
 
     }
 
-    void PPU::initialize(u32* glPixelArray) {
-        pixelData = glPixelArray; }
+    void PPU::initialize(u32* glPixelArray, GLWidget& glWidget) {
+        pixelData = glPixelArray;
+	mGLWidget = &glWidget;
+    }
 
     PPU::~PPU() {
     }
@@ -490,6 +493,7 @@ namespace NESEmulator {
             if (scanline == 241 && cycle == 1) {
                 // The frame is done.
                 ppuStatus.verticalBlank = 1;
+		mGLWidget->update();
                 // tell CPU tyhat rendering is complete
                 if (ppuControl.NMI) {
                     // Set NMI in RAM to true
