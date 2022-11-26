@@ -18,8 +18,7 @@ void Bus::initialize(QByteArray romToLoad)
     for (int i = 0; i < 0x3FFF; i++) {
         debug_prgRom[i] = romToLoad.at(startOfPrgRom + i);
     }
-
-
+    pDMA = &memory[0x4014];
 }
 
 Bus::~Bus() {
@@ -28,18 +27,51 @@ Bus::~Bus() {
 
 void Bus::execLoop() {
 
+    // The CPU runs slowers and only goes once very 3 PPU cycles.
+    if (clockCycle % 3 == 0) {
+        // If DMA is happening, normal CPU operations stop
+        if (performDMA) {
+            // Transfer only starts on odd clock cycles.
+            if (startTransferDMA) {
+                // We have started the DMA process.
+                if (clockCycle % 2 == 0) {
+                    // Get data on even
+                    u16 tAddr = (*pDMA << 8);
+                    tAddr = tAddr | dmaAddr;
+                    dataDMA = readMemory(tAddr);
+                }
+                else {
+                    // Copy data to dma on odd
+                    PPU::the().pOAM[dmaAddr] = dataDMA;
+                    dmaAddr++;
+                    // Once we have done a full 256 bytes of transfer we are done
+                    if(dmaAddr == 0x00) {
+                        performDMA = false;
+                        startTransferDMA = false;
+                    }
+                }
+            }
+            else if ((clockCycle % 2 == 1) && (!startTransferDMA)) {
+                // Start DMA
+                startTransferDMA = true;
+            }
+
+            // then on 1 cycle it transfers memory and hte other it
+        }
+        else {
+            NESEmulator::CPU::the().step(1);
+        }
+    }
+
     // The ppu runs a cycle every loop
     PPU::the().executeLoop();
 
-    // The CPU runs slowers and only goes once very 3 PPU cycles.
-    if (clockCycle % 3 == 0) {
-        NESEmulator::CPU::the().step();
-    }
 
     // NMI control
-    if (Bus::the().readMemory(addrNMI)) {
-        // TODO do stuff?? or is it already handled
-
+    if (PPU::the().getNMI() > 0) {
+        // Set NMI to false;
+        PPU::the().setNMItoZero();
+        CPU::the().NMI();
     }
     clockCycle++;
 }
@@ -99,14 +131,23 @@ void Bus::mattCPUTestLoadROM(QByteArray rom) {
         }
         memory[cartridgeIndex] = rom.at(i);
     }
-    u8 numOfRomBanks = romLoaded.at(4);
-    u8 numOfVramBlocks = romLoaded.at(5);
-    u8 is512Trainer = romLoaded.at(6) & 0b00000010;
+    u8 numOfRomBanks = (u8)rom.at(4);
+    //numOfRomBanks = 1;
+    u8 numOfVramBlocks = (u8)rom.at(5);
+    //numOfVramBlocks = 1;
+    u8 is512Trainer = rom.at(6) & 0b00000010;
     u16 chrRomStart = 16;
     if (is512Trainer) {
         chrRomStart += 512;
     }
     chrRomStart += (0x4000 * numOfRomBanks);
+    // Set mirroring
+    if ((rom.at(6) & 0x01) == 1) {
+        PPU::the().setMirroring(1);
+    }
+    else {
+        PPU::the().setMirroring(0);
+    }
     NESEmulator::PPU::the().loadVram(rom, numOfVramBlocks, chrRomStart);
 }
 
@@ -123,9 +164,7 @@ u8 Bus::readMemory(u16 addr) {
     }
         // PPU Mirroring
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
-        addr = (addr & 0x0007) + ppuRegisterStart;
         return NESEmulator::PPU::the().ppuReadRegister(addr);
-
     }
     else if (addr >= ppuIOStart && addr < apuControlIOStart) {
 
@@ -161,12 +200,19 @@ void Bus::writeMemory(u16 addr, u8 data) {
         addr = addr & 0x1FFF;
     }
     else if (addr >= ppuRegisterStart && addr <= ppuRegisterEnd) {
-        addr = (addr & 0x0007) + ppuRegisterStart;
+        addr = (addr & 0x0007);
         NESEmulator::PPU::the().ppuWriteRegister(addr, data);
     }
     else if (addr >= 0x4016 && addr <= 0x4017) {
-	mControllerCache[addr & 1] = mController[addr & 1];
-	return;
+        mControllerCache[addr & 1] = mController[addr & 1];
+        return;
+    }
+    // DMA Transfer
+    else if (addr == 0x4014) {
+        *pDMA = data;
+        dmaAddr = 0x00;
+        performDMA = true;
+        startTransferDMA = false;
     }
 
     memory[addr] = data;

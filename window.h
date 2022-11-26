@@ -17,6 +17,7 @@ class Window : public QWidget
 
 public:
     Window(u32* _pixelData);
+    GLWidget* openGL;
 
 protected:
 

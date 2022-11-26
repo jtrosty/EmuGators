@@ -6,7 +6,7 @@ GLWidget::GLWidget(QWidget* parent, u32* _pixelData) : QOpenGLWidget(parent) {
     //setFixedSize(widthScaled, heightScaled);
     //setMinimumSize(width * scale, height * scale);
     //setMinimumSize(widthScaled, heightScaled);
-    setMinimumSize(1024, 1024);
+    setMinimumSize(1024, 960);
     setAutoFillBackground(false);
     GLWidget::setEnabled(true);
     GLWidget::grabKeyboard();
@@ -104,13 +104,12 @@ void GLWidget::paintGL() {
     //QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
     //f->glClear(GL_COLOR_BUFFER_BIT);
     //glClear(GL_COLOR_BUFFER_BIT);
-    //debug_updatePixelData();
     QPainter p(this);
     //QImage img((const uchar *)(pixelData), width, height, bytesPerLine, QImage::Format_ARGB32);
-    QImage img((const uchar *)(pixelData), 128, 128, (128 * 4), QImage::Format_ARGB32);
+    QImage img((const uchar *)(pixelData), 256, 240, (256 * sizeof(u32)), QImage::Format_ARGB32);
 
     //weather->addWeatherEffect(&img);
-    lights->mirrorScreen(&img);
+    //lights->mirrorScreen(&img);
 
     p.drawImage(rect(), img);
 }

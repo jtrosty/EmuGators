@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     const QStringList args = parser.positionalArguments();
     RomLoader* romLoader = new RomLoader();
 
+
     auto& bus = NESEmulator::Bus::the();
     auto& cpu = NESEmulator::CPU::the();
     auto& ppu = NESEmulator::PPU::the();
@@ -40,7 +41,7 @@ int main(int argc, char *argv[])
 
 
     // Setup Pixels for game
-    int numOfPixels = 128 * 128;
+    int numOfPixels = 240 * 256;
     u32* pixels = new u32[numOfPixels];
     for (int i = 0; i < numOfPixels; i++) {
         pixels[i] = 0;
@@ -66,7 +67,8 @@ int main(int argc, char *argv[])
     auto func = [&] () {
 	while(running) {
 	    bus.execLoop();
-	    //a.processEvents();
+        w.openGL->update();
+        a.processEvents();
 	}
     };
     QFuture<void> future = QtConcurrent::run(func);

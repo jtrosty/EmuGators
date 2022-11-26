@@ -11,7 +11,7 @@ Window::Window(u32* _pixelData)
 {
     WeatherManager *weather = new WeatherManager();
     weather->requestData();
-    GLWidget* openGL = new GLWidget(this, _pixelData);
+    openGL = new GLWidget(this, _pixelData);
     openGL->weather = weather;
     QPushButton *button = new QPushButton(this);
     button->setText("Change Weather");
@@ -27,7 +27,6 @@ Window::Window(u32* _pixelData)
 
     QKeyEvent* event;
 
-    openGL->debug_updatePixelData();
     openGL->hasFocus();
     layout->addWidget(openGL, 0, 0);
     layout->addWidget(button, 0, 1);
