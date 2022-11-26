@@ -16,6 +16,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS OpenGLWidgets)
 find_package(Qt6 REQUIRED COMPONENTS Gui)
 find_package(Qt6 REQUIRED COMPONENTS Network)
+find_package(Qt6 REQUIRED COMPONENTS SerialPort)
 find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 
 set(PROJECT_SOURCES
@@ -39,6 +40,8 @@ set(PROJECT_SOURCES
         badge.h
         weather.cpp
         weather.h
+        lights.cpp
+        lights.h
         resource.qrc
 )
 
@@ -69,6 +72,7 @@ target_link_libraries(Qt_Test PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 target_link_libraries(Qt_Test PRIVATE Qt6::OpenGLWidgets)
 target_link_libraries(Qt_Test PRIVATE Qt6::Gui)
 target_link_libraries(Qt_Test PRIVATE Qt6::Network)
+target_link_libraries(Qt_Test PRIVATE Qt6::SerialPort)
 target_link_libraries(Qt_Test PRIVATE Qt6::Concurrent)
 
 set_target_properties(Qt_Test PROPERTIES
