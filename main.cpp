@@ -46,7 +46,10 @@ int main(int argc, char *argv[])
     for (int i = 0; i < numOfPixels; i++) {
         pixels[i] = 0;
     }
-    ppu.initialize(pixels);
+    bool running = true;
+    Window w(pixels);
+    w.show();
+    ppu.initialize(pixels, w.glWidget());
 
     //ppu.debug_drawToScreen(romLoader->debug_getDonkeyKongRom());
 
@@ -60,15 +63,12 @@ int main(int argc, char *argv[])
 #endif
 
     bus.execLoop();
-    bool running = true;
-    Window w(pixels);
-    w.show();
 
     auto func = [&] () {
 	while(running) {
-	    bus.execLoop();
-        w.openGL->update();
-        a.processEvents();
+        bus.execLoop();
+	    w.update();
+        //a.processEvents();
 	}
     };
     QFuture<void> future = QtConcurrent::run(func);
