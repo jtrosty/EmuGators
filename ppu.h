@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <QByteArray>
 #include <QDebug>
+#include <QtMath>
 
 #include "defs.h"
 #include "bus.h"
@@ -165,16 +166,12 @@ private:
 
     u8 NMIFlag = 0;
 
-
-
     struct ObjectAttributeMemory {
         u8 yPosition;
         u8 idPattern;
         u8 attribute;
         u8 xPosition;
     } OAM[64] {0};
-
-
 
 public:
     PPU();
@@ -187,6 +184,8 @@ public:
     void initialize(u32* glPixelData);
     void executeLoop();
     void loadVram(QByteArray &rom, u8 num8kVram, u16 chrRomStart);
+
+    int distanceFromGhost();
 
     void debug_load_vRam();
     void debug_drawPatternTable(int patternTable);

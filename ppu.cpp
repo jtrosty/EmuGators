@@ -336,6 +336,51 @@ namespace NESEmulator {
 
     }
 
+    int PPU::distanceFromGhost() {
+        // Fine main characters
+        u8 indexMainChar = 0;
+        u8 mainX = 0;
+        u8 mainY = 0;
+        u8 currX = 0;
+        u8 currY = 0;
+        u8 diffX =0;
+        u8 diffY =0;
+        u16 result = 1000;
+        u32 current = 0;
+
+        for (int i = 0; i < 64; i++) {
+            if (OAM[i].idPattern >= 1 && OAM[i].idPattern <= 20) {
+                indexMainChar = i;
+                mainX = OAM[i].xPosition;
+                mainY = OAM[i].yPosition;
+                break;
+            }
+        }
+
+        for (int i = 0; i < 64; i) {
+            if (OAM[i].idPattern >= 25 && OAM[i].idPattern <= 17) {
+                currX = OAM[i].xPosition;
+                currY = OAM[i].yPosition;
+                if (currX < mainX) {
+                    diffX = mainX - currX;
+                }
+                else {
+                    diffX = currX - mainX;
+                }
+                if (currY < mainY) {
+                    diffY = mainY - currY;
+                }
+                else {
+                    diffY = currY - mainY;
+                }
+                current = (diffX * diffX) + (diffY * diffY);
+                current = qSqrt(current);
+                if (current < result) result = current;
+            }
+        }
+        return  result;
+    }
+
     void PPU::debug_drawToScreen(QByteArray donkeyKong) {
         int prgRomSize = 0x01 * 0x4000; // 16 kb time number of prg rom secions
         int chrRomSize = 0x01 * 0x2000; // 8 kb time number of prg rom secions
