@@ -651,7 +651,9 @@ namespace NESEmulator {
                         else {
                             y = OAM[i].yPosition + spriteRow;
                         }
-                        setPixel(x, y, colors[colorAddress]);
+			if (x >= 0 && x < 256 && y>= 0 && y < 240) {
+                            setPixel(x, y, colors[colorAddress]);
+                        }
 
                         spriteLSB >>= 1;
                         spriteMSB >>= 1;
