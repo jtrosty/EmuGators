@@ -63,7 +63,7 @@ void WeatherManager::updateWeatherEffect(){
     else{
 
         if(currentWeather == "Clouds"){
-            int windspeed = 5;
+            int windspeed = 1;
             for(int i = 0; i < weatherTargets.size(); i++){
                 QRectF newTarget = weatherTargets[i].translated(windspeed, 0);
                 if(newTarget.x() > 256 + 30){
@@ -73,7 +73,7 @@ void WeatherManager::updateWeatherEffect(){
             }
         }
         else if(currentWeather == "Rain"){
-            int rainspeed = 5;
+            int rainspeed = 2;
             for(int i = 0; i < weatherTargets.size(); i++){
                 QRectF newTarget = weatherTargets[i].translated(0, rainspeed);
                 if(newTarget.y() > 240 + 100){

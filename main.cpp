@@ -67,6 +67,7 @@ int main(int argc, char *argv[])
     auto func = [&] () {
 	while(running) {
 	    bus.execLoop();
+        //qDebug() << ppu.distanceFromGhost();
 	}
     };
     QFuture<void> future = QtConcurrent::run(func);

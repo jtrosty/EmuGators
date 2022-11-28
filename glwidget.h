@@ -41,6 +41,7 @@ public:
     WeatherManager* weather = nullptr;
     LightManager* lights = nullptr;
 
+
     GLWidget(QWidget* parent, u32* _pixelData);
 
     ~GLWidget();
@@ -48,13 +49,17 @@ public:
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
 
-    // Slots
-
-    // Signals
 
     // Helper functions
     void debug_updatePixelData();
     QByteArray getPixelData();
+    void emitGhostDistance(int dist);
+
+    // Slots
+
+    signals:
+    void ghostDistance(int dist);
+
 
     // Protected virtual functions for OpenGL, we do not call these
     protected:
