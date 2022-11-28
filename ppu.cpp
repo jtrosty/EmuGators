@@ -271,13 +271,20 @@ namespace NESEmulator {
                 // Name table 0 and table 2, map to table 0
                 if ((address >= 0x2000 && address <= 0x23FF) ||
                     (address >= 0x2800 && address <= 0x2BFF)) {
-
-                    address = 0x2000 + (address & 0x03FF);
+                    address = address & 0x0FFF;
+                    if ((address) > 0x03FF) {
+                        address -= 0x03FF;
+                    }
+                    address = 0x2000 + address;
                 }
                 // Name table 1 and 3 mapped onto trable 1
                 else if ((address >= 0x2400 && address <= 0x27FF) ||
                         (address >= 0x2C00 && address <= 0x2FFF)) {
-                    address = 0x2400 + (address & 0x03FF);
+                    address = address & 0x0FFF;
+                    if ((address) > 0x03FF) {
+                        address -= 0x03FF;
+                    }
+                    address = 0x2400 + address;
                 }
             }
             // Horizontal
@@ -285,13 +292,20 @@ namespace NESEmulator {
                 // Name table 0 and table 1, map to table 0
                 if ((address >= 0x2000 && address <= 0x23FF) ||
                     (address >= 0x2400 && address <= 0x27FF)) {
-
-                    address = 0x2000 + (address & 0x03FF);
+                    address = address & 0x0FFF;
+                    if ((address) > 0x03FF) {
+                        address -= 0x03FF;
+                    }
+                    address = 0x2000 + address;
                 }
                 // Name table 2 and 3 mapped onto trable 2
                 else if ((address >= 0x2800 && address <= 0x2BFF) ||
                         (address >= 0x2C00 && address <= 0x2FFF)) {
-                    address = 0x2800 + (address & 0x03FF);
+                    address = address & 0x0FFF;
+                    if ((address) > 0x03FF) {
+                        address -= 0x03FF;
+                    }
+                    address = 0x2800 + address;
                 }
             }
         }
@@ -349,7 +363,7 @@ namespace NESEmulator {
         u32 current = 0;
 
         for (int i = 0; i < 64; i++) {
-            if (OAM[i].idPattern >= 1 && OAM[i].idPattern <= 20) {
+            if (OAM[i].idPattern == 1) {
                 indexMainChar = i;
                 mainX = OAM[i].xPosition;
                 mainY = OAM[i].yPosition;
@@ -358,7 +372,7 @@ namespace NESEmulator {
         }
 
         for (int i = 0; i < 64; i) {
-            if (OAM[i].idPattern >= 25 && OAM[i].idPattern <= 17) {
+            if (OAM[i].idPattern >= 25 && OAM[i].idPattern <= 30) {
                 currX = OAM[i].xPosition;
                 currY = OAM[i].yPosition;
                 if (currX < mainX) {
@@ -404,6 +418,8 @@ namespace NESEmulator {
             // This cycle is skpped for scanline 0
             if (scanline == 0 && cycle == 0) {
                 cycle = 1;
+                //int result = distanceFromGhost();
+                //qDebug() << "Distance: " << distanceFromGhost();
             }
             if (scanline == -1 && cycle == 1) {
                 ppuStatus.verticalBlank = 0;
@@ -423,6 +439,11 @@ namespace NESEmulator {
                 // 1 cycle per pixel
                 // It takes 2 cycles to write a 16-bit word.
                 // other other case will be skipped.
+                u16 debug_Scan;
+                u16 debug_Cycle;
+                u16 debug_localAddress;
+
+
                 switch ((cycle - 1) % 8) {
                 // NT byte
                 case 0:
@@ -431,6 +452,14 @@ namespace NESEmulator {
 
                     // Load the bgNext name table for the following 8 cycles
                     localAddress = 0x2000 | (vramLoopy.reg & 0x0FFF);
+                    /*
+                    debug_Scan = scanline / 8;
+                    debug_Cycle = cycle / 8;
+                    debug_localAddress = (debug_Scan << 5) | debug_Cycle;
+                    */
+
+
+                    //bgNextNametableValue = ppuReadVRAM(debug_localAddress);
                     bgNextNametableValue = ppuReadVRAM(localAddress);
 
                     break;
@@ -523,7 +552,7 @@ namespace NESEmulator {
                     // The screen, this below does nothign
                     bgNextNametableValue =  ppuReadVRAM(0x2000 | (vramLoopy.reg & 0x0FFF));
                 }
-                if (scanline == -1 && cycle >= 280 && cycle < 305) {
+                if (scanline == -1 ) {
                     // We have completed the row, in preperation for the next, perform
                     // Loopy register y transform from tvramLoopy to vramLoopy.
                     loopyTransferY();
@@ -647,7 +676,9 @@ namespace NESEmulator {
                         else {
                             y = OAM[i].yPosition + spriteRow;
                         }
-                        setPixel(x, y, colors[colorAddress]);
+                        if (y >= 0 && y < 240 && x >= 0 && x < 256 ) {
+                            setPixel(x, y, colors[colorAddress]);
+                        }
 
                         spriteLSB >>= 1;
                         spriteMSB >>= 1;
@@ -740,6 +771,7 @@ namespace NESEmulator {
             vramLoopy.nameTableY = tempVramLoopy.nameTableY;
             vramLoopy.coarseY = tempVramLoopy.coarseY;
             vramLoopy.fineY = tempVramLoopy.fineY;
+
         }
     }
 
