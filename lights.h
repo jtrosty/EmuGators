@@ -21,12 +21,14 @@ class LightManager : public QObject {
     int vid = 9025;
     int pid = 67;
     int numLeds = 30;
+    bool alternating = false;
 
 public:
     LightManager();
 
 public slots:
     void mirrorScreen(QImage* screen);
+    void mirrorGhosts(int dist);
 };
 
 

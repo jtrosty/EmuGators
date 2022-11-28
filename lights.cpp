@@ -71,6 +71,51 @@ void LightManager::mirrorScreen(QImage* img){
         writeStream << (quint8)tempGreen;
         writeStream << (quint8)tempBlue;
     }
+}
+void LightManager::mirrorGhosts(int dist){
+    QDataStream writeStream(uno);
+    writeStream << (quint8)(255);
+    if(dist == 1000){ //default distance, should not be this when actually in game
+        for(int i = 0; i < numLeds; i++){
+            writeStream << (quint8)0;
+            writeStream << (quint8)0;
+            writeStream << (quint8)100;
+        }
 
+    }
+    if(dist > 20){
+        for(int i = 0; i < numLeds; i++){
+            writeStream << (quint8)(255-dist);
+            writeStream << (quint8)0;
+            writeStream << (quint8)0;
+        }
+    }
+    else{
 
+        for(int i = 0; i < numLeds; i++){
+            if(alternating){
+                if(i % 2 == 0){
+                    writeStream << (quint8)(255-dist);
+                }
+                else{
+                    writeStream << (quint8)0;
+                }
+
+                writeStream << (quint8)0;
+                writeStream << (quint8)0;
+            }
+            else{
+                if((i + 1) % 2 == 0){
+                    writeStream << (quint8)(255-dist);
+                }
+                else{
+                    writeStream << (quint8)0;
+                }
+
+                writeStream << (quint8)0;
+                writeStream << (quint8)0;
+            }
+        }
+        alternating = !alternating;
+    }
 }
