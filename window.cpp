@@ -1,4 +1,5 @@
 #include "window.h"
+#include "lights.h"
 #include "weather.h"
 #include "glwidget.h"
 
@@ -12,10 +13,18 @@ Window::Window(u32* _pixelData)
     weather->requestData();
     GLWidget* openGL = new GLWidget(this, _pixelData);
     openGL->weather = weather;
+    mGLWidget = openGL;
     QPushButton *button = new QPushButton(this);
-    button->setText("Push Me!");
+    button->setText("Change Weather");
     QLabel *weatherLabel = new QLabel(this);
     QObject::connect(weather, &WeatherManager::updated, weatherLabel, &QLabel::setText);
+
+    LightManager* lights = new LightManager();
+    openGL->lights = lights;
+    QObject::connect(button, SIGNAL(pressed()), weather, SLOT(debug_cycleWeather()));
+    QObject::connect(mGLWidget, SIGNAL(ghostDistance(int)), lights, SLOT(mirrorGhosts(int)));
+
+
 
     QGridLayout* layout = new QGridLayout(this);
 

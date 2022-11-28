@@ -1,9 +1,6 @@
 #include "glwidget.h"
 #include "bus.h"
 
-#define MATT_KEY_DEBUG 0
-
-
 GLWidget::GLWidget(QWidget* parent, u32* _pixelData) : QOpenGLWidget(parent) {
     //setGeometry(20,20, 256, 240);
     //setFixedSize(widthScaled, heightScaled);
@@ -77,57 +74,12 @@ void GLWidget::keyPressImpl(QKeyEvent* event, u8 (*addOrRemoveKey)(int, u8))
 	event->ignore();
 }
 
-void GLWidget::debugKeyPressEvent(QKeyEvent* event)
-{
+void GLWidget::keyPressEvent(QKeyEvent *event) {
     keyPressImpl(event, Controller::addKey);
 }
-void GLWidget::debugKeyReleaseEvent(QKeyEvent* event)
-{
+
+void GLWidget::keyReleaseEvent(QKeyEvent* event) {
     keyPressImpl(event, Controller::removeKey);
-}
-
-void GLWidget::keyPressEvent(QKeyEvent *event) {
-#if MATT_KEY_DEBUG
-    debugKeyPressEvent(event);
-    return;
-#endif
-    switch (event->key()) {
-    case Qt::Key_W:
-        inputY = 10;
-        this->update();
-        break;
-    case Qt::Key_S:
-        inputY = -10;
-        this->update();
-        break;
-    case Qt::Key_A:
-        inputX = 10;
-        this->update();
-        break;
-    case Qt::Key_D:
-        inputX = -10;
-        this->update();
-        break;
-    case Qt::Key_Space:
-        this->update();
-        break;
-    case Qt::Key_F:
-        this->update();
-        break;
-    case Qt::Key_Escape:
-        this->update();
-        break;
-    default:
-        event->ignore();
-        break;
-    }
-}
-
-void GLWidget::keyReleaseEvent(QKeyEvent* event)
-{
-#if MATT_KEY_DEBUG
-    debugKeyReleaseEvent(event);
-#endif
 }
 
 void GLWidget::debug_updatePixelData() {
@@ -156,10 +108,15 @@ void GLWidget::paintGL() {
     //QImage img((const uchar *)(pixelData), width, height, bytesPerLine, QImage::Format_ARGB32);
     QImage img((const uchar *)(pixelData), 256, 240, (256 * sizeof(u32)), QImage::Format_ARGB32);
 
+    weather->addWeatherEffect(&img);
 
     p.drawImage(rect(), img);
 }
 
 void GLWidget::resizeGL(int w, int h) {
     glViewport(0, 0, w, h);
+}
+
+void GLWidget::emitGhostDistance(int dist){
+    emit(ghostDistance(dist));
 }

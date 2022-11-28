@@ -21,8 +21,11 @@ void WeatherManager::requestData(){
 }
 
 void WeatherManager::updateWeatherEffect(){
-    currentWeather = "Rain";
-    if(weatherTargets.empty()){
+    if(weatherTargets.empty() || weatherChanged){
+        if(weatherChanged){
+            weatherChanged = false;
+            weatherTargets.clear();
+        }
         if(currentWeather == "Clouds"){
             for(int i = 0; i < 6; i++){
                 double randomFactor1 = QRandomGenerator::global()->generateDouble();
@@ -60,7 +63,7 @@ void WeatherManager::updateWeatherEffect(){
     else{
 
         if(currentWeather == "Clouds"){
-            int windspeed = 10;
+            int windspeed = 1;
             for(int i = 0; i < weatherTargets.size(); i++){
                 QRectF newTarget = weatherTargets[i].translated(windspeed, 0);
                 if(newTarget.x() > 256 + 30){
@@ -70,7 +73,7 @@ void WeatherManager::updateWeatherEffect(){
             }
         }
         else if(currentWeather == "Rain"){
-            int rainspeed = 5;
+            int rainspeed = 2;
             for(int i = 0; i < weatherTargets.size(); i++){
                 QRectF newTarget = weatherTargets[i].translated(0, rainspeed);
                 if(newTarget.y() > 240 + 100){
@@ -114,5 +117,22 @@ void WeatherManager::addWeatherEffect(QImage* img){
         painter.drawImage(target, weatherSprite);
     }
 
+}
 
+void WeatherManager::debug_cycleWeather(){
+    if(currentWeather == "Clear"){
+        currentWeather = "Clouds";
+    }
+    else if(currentWeather == "Clouds"){
+        currentWeather = "Rain";
+    }
+    else if(currentWeather == "Rain"){
+        currentWeather = "Clear";
+    }
+    else{
+        currentWeather = "Clear";
+    }
+    weatherChanged = true;
+
+    emit updated(currentWeather);
 }

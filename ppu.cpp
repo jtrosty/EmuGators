@@ -1,4 +1,5 @@
 #include "ppu.h"
+#include "glwidget.h"
 
 namespace NESEmulator {
 
@@ -8,8 +9,10 @@ namespace NESEmulator {
 
     }
 
-    void PPU::initialize(u32* glPixelArray) {
-        pixelData = glPixelArray; }
+    void PPU::initialize(u32* glPixelArray, GLWidget& glWidget) {
+        pixelData = glPixelArray;
+	mGLWidget = &glWidget;
+    }
 
     PPU::~PPU() {
     }
@@ -371,7 +374,8 @@ namespace NESEmulator {
             }
         }
 
-        for (int i = 0; i < 64; i) {
+
+        for (int i = 0; i < 64; i++) {
             if (OAM[i].idPattern >= 25 && OAM[i].idPattern <= 30) {
                 currX = OAM[i].xPosition;
                 currY = OAM[i].yPosition;
@@ -565,6 +569,8 @@ namespace NESEmulator {
                 // The frame is done.
                 drawSprites();
                 ppuStatus.verticalBlank = 1;
+                mGLWidget->update();
+                mGLWidget->emitGhostDistance(distanceFromGhost());
                 // tell CPU tyhat rendering is complete
                 if (ppuControl.NMI) {
                     // Set NMI in RAM to true
@@ -676,7 +682,8 @@ namespace NESEmulator {
                         else {
                             y = OAM[i].yPosition + spriteRow;
                         }
-                        if (y >= 0 && y < 240 && x >= 0 && x < 256 ) {
+
+                        if (x >= 0 && x < 256 && y>= 0 && y < 240) {
                             setPixel(x, y, colors[colorAddress]);
                         }
 

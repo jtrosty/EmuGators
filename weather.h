@@ -20,6 +20,7 @@ class WeatherManager : public QObject {
 
     int zipCode = 31014;
     QString currentWeather = "unknown";
+    bool weatherChanged = false;
 
     QScopedPointer<QNetworkReply, QScopedPointerDeleteLater> reply;
 
@@ -31,6 +32,7 @@ public:
 public slots:
     void requestData();
     void updateWeatherEffect();
+    void debug_cycleWeather();
 private slots:
     void httpFinished();
 signals:
